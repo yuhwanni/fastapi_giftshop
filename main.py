@@ -49,16 +49,7 @@ async def jobBrands():
         print('다른거 동작중 brand')
         return
     JOB_ING_BRANDS = True        
-    # 로깅 설정
-    today = datetime.now().strftime("%Y%m%d")
-    log_dir = os.path.join("logs", today)
-    os.makedirs(log_dir, exist_ok=True)
-    logging.basicConfig(
-        filename=os.path.join(log_dir, "fetch_brands.log"),
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s"
-    )
-    logger = logging.getLogger(__name__)
+    
     db = AsyncDatabase()
 
     brands = await fetch_brands()
@@ -98,16 +89,7 @@ async def jobGoods():
         print('다른거 동작중 goods')
         return
     JOB_ING_GOODS = True
-    # 로깅 설정
-    today = datetime.now().strftime("%Y%m%d")
-    log_dir = os.path.join("logs", today)
-    os.makedirs(log_dir, exist_ok=True)
-    logging.basicConfig(
-        filename=os.path.join(log_dir, "fetch_goods.log"),
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s"
-    )
-    logger = logging.getLogger(__name__)
+    
     db = AsyncDatabase()
     start, size = 1, 100
     success_count, fail = 0, []
@@ -187,16 +169,7 @@ async def jobSends():
         print('다른거 동작중 sends')
         return
     JOB_ING_SEND = True        
-    # 로깅 설정
-    today = datetime.now().strftime("%Y%m%d")
-    log_dir = os.path.join("logs", today)
-    os.makedirs(log_dir, exist_ok=True)
-    logging.basicConfig(
-        filename=os.path.join(log_dir, "send_goods_batch.log"),
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s"
-    )
-    logger = logging.getLogger(__name__)
+    
     db = AsyncDatabase()
 
     success_count, fail = 0, []

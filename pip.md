@@ -8,6 +8,11 @@ uvicorn main:app --reload
 
 nohup uvicorn main:app --host 0.0.0.0 --port 8001 &
 
+nohup /usr/local/bin/python3.11 -m uvicorn main:app --host 0.0.0.0 --port 8001 > nohup.out 2>&1 &
+
+nohup /usr/local/bin/python3.11 /usr/local/bin/uvicorn main:app --host 0.0.0.0 --port 8001
+
+
 # 기프티쇼에서 브랜드와 상품 가져오기
 python ./batch/fetch_brand_goods_batch.py
 # 기프티쇼에서 상품 보낸 후 쿠폰정보(상품정보) 불러오기

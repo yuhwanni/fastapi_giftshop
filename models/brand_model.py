@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, BigInteger, DateTime, text
+from sqlalchemy import Column, String, BigInteger, DateTime, text, Integer
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -20,3 +20,5 @@ class Brand(Base):
     sort = Column(String(10), nullable=True, comment="정렬")
     crt_date = Column(DateTime, server_default=text("current_timestamp()"))
     upd_date = Column(DateTime, nullable=True)
+    goods_cnt = Column(Integer, nullable=True, default=0, comment="상품수")
+    

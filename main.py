@@ -164,6 +164,14 @@ async def jobGoods():
 
         start = start + 1
     logger.info(f"fetch goods. success:{success_count}, fail:{len(fail)}")
+    update_goods_cnt_sql = '''
+        UPDATE API_GIFTISHOW_BRANDS B SET
+        B.goods_cnt = ( SELECT IFNULL(COUNT(*),0) FROM API_GIFTISHOW_GOODS G WHERE G.brandCode=B.brandCode )
+    '''
+
+    await db.execute(update_goods_cnt_sql)
+    print('goods update success')
+
     JOB_ING_GOODS = False
     await db.engine.dispose()
 
@@ -277,7 +285,7 @@ scheduler.add_job(lambda: run(jobSends()), "interval", seconds=JOB_SENDS_SEC)
 @asynccontextmanager
 # @repeat_every(seconds=1)  # 1 hour
 async def lifespan(app: FastAPI):
-    print('start')
+    print('start')    
     scheduler.start()
     yield
     print('end')
@@ -293,23 +301,21 @@ app = FastAPI(title="Giftishow API", lifespan=lifespan)
         "result":true,false, 
         "msg":msg, 
         "list":[
-        {
-            "Brand": {
-                "brandIconImg": "https://bizimg.giftishow.com/Resource/brand/20190423_171158178.jpg",
-                "brandCode": "BR00002",
-                "brandName": "GS25",
-                "content": "",
-                "category1Seq": "4",
-                "category2Seq": "29",
-                "crt_date": "2025-09-10T16:38:40",
-                "brandBannerImg": "https://bizimg.giftishow.com/Resource/brand/BR_20140729_172540_1.jpg",
-                "brandSeq": "691",
-                "mmsThumImg": "https://bizimg.giftishow.com/Resource/brand/20190423_171201873.jpg",
-                "category1Name": "편의점",
-                "category2Name": "인기 TOP100",
-                "sort": "3",
-                "upd_date": "2025-09-10T17:06:17"
-            }
+        {        
+            "brandIconImg": "https://bizimg.giftishow.com/Resource/brand/20190423_171158178.jpg",
+            "brandCode": "BR00002",
+            "brandName": "GS25",
+            "content": "",
+            "category1Seq": "4",
+            "category2Seq": "29",
+            "crt_date": "2025-09-10T16:38:40",
+            "brandBannerImg": "https://bizimg.giftishow.com/Resource/brand/BR_20140729_172540_1.jpg",
+            "brandSeq": "691",
+            "mmsThumImg": "https://bizimg.giftishow.com/Resource/brand/20190423_171201873.jpg",
+            "category1Name": "편의점",
+            "category2Name": "인기 TOP100",
+            "sort": "3",
+            "upd_date": "2025-09-10T17:06:17"        
         },...
     }
 '''
@@ -327,7 +333,7 @@ async def get_brands(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db
     page_info = make_page_info(total_count, page, size)    
 
     paged_results = await db.execute(
-        stmt.order_by(Brand.brandSeq.desc())
+        stmt.order_by(Brand.sort.asc())
         .offset(offset)
         .limit(size)
     )
@@ -350,82 +356,85 @@ async def get_brands(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db
         "msg": "",
         "list": [
             {
-                "Goods": {
-                    "brandName": "뚜레쥬르",
-                    "brandIconImg": "https://bizimg.giftishow.com/Resource/brand/20241218_135627359.jpg",
-                    "validPrdDay": "20251010",
-                    "exhAgeCd": null,
-                    "sellDisRate": null,                
-                    "content": "▶상품설명
-                        뚜레쥬르의 빵은 맛있고 건강합니다.
-                        뚜레쥬르의 빵은 어머니가 만들어주신 것처럼 까다롭게 다져서 고른 재료를 이용하여 매일매일 매장에서 직접 구워냅니다.
-                        꼭꼭 씹으면 씹을수록 매장에서 느껴지는 고소함은 바로 원재료 본연의 건강함입니다.
-                        빵 본연의 풍미를 느낄 수 있는 뚜레쥬르의 빵을 즐겨보세요.                        
-                        ▶이용안내
-                        이용시간 : 07:00~23:00 (매장에 따라 운영시간은 변동이 있을 수 있음)
-                        
-                        ▶유의사항
-                        포인트 적립 및 제휴할인 불가합니다.
-                        현금으로 교환 불가합니다.
-                        잔액 환불 불가합니다.
-                        타 쿠폰 및 할인카드와의 중복 사용은 불가합니다.
-                        기프티쇼 사용금액 제외 후 추가 결제분에 한해 제휴할인 및 포인트적립 가능합니다.
-                        
-                        ▶사용불가매장
-                        - 마트/휴게소/인천공항 內 입점된 매장은 사용 불가합니다.
-                        - 용산역사점",
-                    "mmsGoodsImg": "https://bizimg.giftishow.com/Resource/goods/2022/G00000182305/G00000182305_250.jpg",
-                    "endDate": "2999-12-31T00:00:00",
-                    "mmsReserveFlag": "Y",
-                    "rmIdBuyCntFlagCd": "MONTH",
-                    "is_sale": "N",
-                    "contentAddDesc": null,
-                    "discountPrice": "7520",
-                    "goodsComId": "S000001864",
-                    "goodsStateCd": "SALE",
-                    "point_multi": "4.4",
-                    "is_naverpay": "N",
-                    "goodsNo": "35639",
-                    "discountRate": "6.0",
-                    "realPrice": "8000",
-                    "goodsComName": "뚜레쥬르",
-                    "mmsBarcdCreateYn": "Y",
-                    "real_point": null,
-                    "crt_date": "2025-09-10T16:40:49",
-                    "goodsCode": "G00000182305",
-                    "goodstypeNm": "일반상품(물품교환형)",
-                    "salePrice": "8000",
-                    "affiliateId": "뚜레쥬르",
-                    "rmCntFlag": "N",                
-                    "upd_date": "2025-09-10T16:40:50",
-                    "goodsName": "뚜레쥬르 교환권 8천원",
-                    "goodsImgS": "https://bizimg.giftishow.com/Resource/goods/2022/G00000182305/G00000182305_250.jpg",
-                    "srchKeyword": "뚜레쥬르 교환권 8000원권,빵,베이커리,브레드,bread,뚜레쥬르,뚜레주르,뚜래쥬르,뚜래주르,touslesjours,선물,이벤트,교환권,뚜레쥬르교환권,8천원,팔천원",
-                    "saleDateFlagCd": "DAY_SALE",
-                    "goodsTypeDtlNm": "베이커리/도넛",                
-                    "brandCode": "BR00030",
-                    "goodsImgB": "https://bizimg.giftishow.com/Resource/goods/2022/G00000182305/G00000182305.jpg",
-                    "validPrdTypeCd": "01",
-                    "affilate": "뚜레쥬르",
-                    "category1Seq": "2",                
-                    "goodsDescImgWeb": null,
-                    "limitday": "30",
-                    "exhGenderCd": null,
-                    "saleDateFlag": "N"
-                }
+                "brandName": "뚜레쥬르",
+                "brandIconImg": "https://bizimg.giftishow.com/Resource/brand/20241218_135627359.jpg",
+                "validPrdDay": "20251010",
+                "exhAgeCd": null,
+                "sellDisRate": null,                
+                "content": "▶상품설명
+                    뚜레쥬르의 빵은 맛있고 건강합니다.
+                    뚜레쥬르의 빵은 어머니가 만들어주신 것처럼 까다롭게 다져서 고른 재료를 이용하여 매일매일 매장에서 직접 구워냅니다.
+                    꼭꼭 씹으면 씹을수록 매장에서 느껴지는 고소함은 바로 원재료 본연의 건강함입니다.
+                    빵 본연의 풍미를 느낄 수 있는 뚜레쥬르의 빵을 즐겨보세요.                        
+                    ▶이용안내
+                    이용시간 : 07:00~23:00 (매장에 따라 운영시간은 변동이 있을 수 있음)
+                    
+                    ▶유의사항
+                    포인트 적립 및 제휴할인 불가합니다.
+                    현금으로 교환 불가합니다.
+                    잔액 환불 불가합니다.
+                    타 쿠폰 및 할인카드와의 중복 사용은 불가합니다.
+                    기프티쇼 사용금액 제외 후 추가 결제분에 한해 제휴할인 및 포인트적립 가능합니다.
+                    
+                    ▶사용불가매장
+                    - 마트/휴게소/인천공항 內 입점된 매장은 사용 불가합니다.
+                    - 용산역사점",
+                "mmsGoodsImg": "https://bizimg.giftishow.com/Resource/goods/2022/G00000182305/G00000182305_250.jpg",
+                "endDate": "2999-12-31T00:00:00",
+                "mmsReserveFlag": "Y",
+                "rmIdBuyCntFlagCd": "MONTH",
+                "is_sale": "N",
+                "contentAddDesc": null,
+                "discountPrice": "7520",
+                "goodsComId": "S000001864",
+                "goodsStateCd": "SALE",
+                "point_multi": "4.4",
+                "is_naverpay": "N",
+                "goodsNo": "35639",
+                "discountRate": "6.0",
+                "realPrice": "8000",
+                "goodsComName": "뚜레쥬르",
+                "mmsBarcdCreateYn": "Y",
+                "real_point": null,
+                "crt_date": "2025-09-10T16:40:49",
+                "goodsCode": "G00000182305",
+                "goodstypeNm": "일반상품(물품교환형)",
+                "salePrice": "8000",
+                "affiliateId": "뚜레쥬르",
+                "rmCntFlag": "N",                
+                "upd_date": "2025-09-10T16:40:50",
+                "goodsName": "뚜레쥬르 교환권 8천원",
+                "goodsImgS": "https://bizimg.giftishow.com/Resource/goods/2022/G00000182305/G00000182305_250.jpg",
+                "srchKeyword": "뚜레쥬르 교환권 8000원권,빵,베이커리,브레드,bread,뚜레쥬르,뚜레주르,뚜래쥬르,뚜래주르,touslesjours,선물,이벤트,교환권,뚜레쥬르교환권,8천원,팔천원",
+                "saleDateFlagCd": "DAY_SALE",
+                "goodsTypeDtlNm": "베이커리/도넛",                
+                "brandCode": "BR00030",
+                "goodsImgB": "https://bizimg.giftishow.com/Resource/goods/2022/G00000182305/G00000182305.jpg",
+                "validPrdTypeCd": "01",
+                "affilate": "뚜레쥬르",
+                "category1Seq": "2",                
+                "goodsDescImgWeb": null,
+                "limitday": "30",
+                "exhGenderCd": null,
+                "saleDateFlag": "N",
+                "goods_cnt":0                
             },,...
         ]
     }
 '''
 )
 async def get_goods(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)):
-
+# brandCode: str = "",
     result = True
     msg = ""
 
     offset = (page - 1) * size
 
     stmt = select(Goods)
+    # if brandCode is not "":
+    #     print('BR00007')
+    #     stmt.where(Goods.brandCode==brandCode)
+
     total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
     total_count = total_results.scalar() or 0  # 전체 데이터 개수
 

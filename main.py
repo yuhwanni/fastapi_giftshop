@@ -331,7 +331,14 @@ async def get_brands(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db
         .offset(offset)
         .limit(size)
     )
-    list = [r._mapping for r in paged_results.all()]
+    # list = [r._mapping for r in paged_results.all()]
+
+    list = []
+    
+    for r in paged_results.all():
+        item = r.Brand.__dict__.copy()
+        item.pop("_sa_instance_state", None)
+        list.append(item)
 
     return {"result":result, "page_info":page_info, "msg":msg, "list":list}
 
@@ -429,7 +436,16 @@ async def get_goods(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db:
         .offset(offset)
         .limit(size)
     )
-    list = [r._mapping for r in paged_results.all()]
+    # list = [r._mapping for r in paged_results.all()]
+
+    list = []
+    
+    for r in paged_results.all():
+        item = r.Goods.__dict__.copy()
+        item.pop("_sa_instance_state", None)
+        list.append(item)
+
+    # list = [dict(r.Brand.__dict__) for r in paged_results.all()]
 
     return {"result":result, "msg":msg, "page_info":page_info, "list":list}
     

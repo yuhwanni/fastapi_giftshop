@@ -423,18 +423,18 @@ async def get_brands(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db
     }
 '''
 )
-async def get_goods(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)):
-# brandCode: str = "",
+async def get_goods(page: int = Query(1, ge=1), size: int = Query(20, ge=1), brandCode: str = "", goodsName: str = "", db: AsyncSession = Depends(get_async_session)):
+# 
     result = True
     msg = ""
 
     offset = (page - 1) * size
 
     stmt = select(Goods)
-    # if brandCode is not "":
-    #     print('BR00007')
-    #     stmt.where(Goods.brandCode==brandCode)
-
+    if brandCode is not "":        
+        stmt = stmt.where(Goods.brandCode==brandCode)
+    if goodsName is not "":
+        stmt = stmt.where(Goods.goodsName.contains(goodsName, autoescape=True))
     total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
     total_count = total_results.scalar() or 0  # 전체 데이터 개수
 

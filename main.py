@@ -315,7 +315,8 @@ app = FastAPI(title="Giftishow API", lifespan=lifespan)
             "category1Name": "편의점",
             "category2Name": "인기 TOP100",
             "sort": "3",
-            "upd_date": "2025-09-10T17:06:17"        
+            "upd_date": "2025-09-10T17:06:17",
+            "goods_cnt":0                        
         },...
     }
 '''
@@ -416,8 +417,7 @@ async def get_brands(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db
                 "goodsDescImgWeb": null,
                 "limitday": "30",
                 "exhGenderCd": null,
-                "saleDateFlag": "N",
-                "goods_cnt":0                
+                "saleDateFlag": "N"                
             },,...
         ]
     }

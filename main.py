@@ -29,6 +29,10 @@ from utils.log_util import logger
 from starlette.background import BackgroundTask
 from starlette.types import Message
 
+from sqlalchemy import func
+from utils.common import make_page_info
+
+
 load_dotenv()
 USER_ID = os.getenv("USER_ID", "")
 SEND_NUMBER = os.getenv("SEND_NUMBER", "")
@@ -315,9 +319,21 @@ async def get_brands(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db
     msg = ""
     
     offset = (page - 1) * size
-    results = await db.execute(select(Brand).offset(offset).limit(size))
-    list = [r._mapping for r in results.all()]
-    return {"result":result, "msg":msg, "list":list}
+
+    stmt = select(Brand)
+    total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
+    total_count = total_results.scalar() or 0  # 전체 데이터 개수
+
+    page_info = make_page_info(total_count, page, size)    
+
+    paged_results = await db.execute(
+        stmt.order_by(Brand.brandSeq.desc())
+        .offset(offset)
+        .limit(size)
+    )
+    list = [r._mapping for r in paged_results.all()]
+
+    return {"result":result, "page_info":page_info, "msg":msg, "list":list}
 
 @app.get("/goods", dependencies=[Depends(verify_ext_access)], summary="상품 리스트"
 , response_description=
@@ -401,10 +417,21 @@ async def get_goods(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db:
     msg = ""
 
     offset = (page - 1) * size
-    results = await db.execute(select(Goods).offset(offset).limit(size))
 
-    list = [r._mapping for r in results.all()]
-    return {"result":result, "msg":msg, "list":list}
+    stmt = select(Goods)
+    total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
+    total_count = total_results.scalar() or 0  # 전체 데이터 개수
+
+    page_info = make_page_info(total_count, page, size)    
+
+    paged_results = await db.execute(
+        stmt.order_by(Goods.goodsCode.desc())
+        .offset(offset)
+        .limit(size)
+    )
+    list = [r._mapping for r in paged_results.all()]
+
+    return {"result":result, "msg":msg, "page_info":page_info, "list":list}
     
 
 @app.post("/send", dependencies=[Depends(verify_ext_access)], summary="쿠폰 전송 요청"

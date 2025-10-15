@@ -2,11 +2,12 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
-from contextlib import contextmanager, asynccontextmanager
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import SQLAlchemyError
+from contextlib import asynccontextmanager
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError, OperationalError, InterfaceError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from dotenv import load_dotenv
+import asyncio
 
 load_dotenv()
 
@@ -29,7 +30,7 @@ logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
 # -----------------------------
-# 공통 환경 변수
+# 환경 변수
 # -----------------------------
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
@@ -38,48 +39,85 @@ DB_PORT = os.getenv("DB_PORT", "3306")
 DB_NAME = os.getenv("DB_NAME")
 
 # -----------------------------
-# 비동기 MariaDB Database
+# AsyncDatabase
 # -----------------------------
 class AsyncDatabase:
     def __init__(self):
         self.database_url = f"mysql+aiomysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
-        self.engine = create_async_engine(self.database_url, echo=False, future=True)
+        self.engine = None
+        self.async_session = None
+        asyncio.create_task(self._initialize())
+
+    async def _initialize(self):
+        """엔진과 세션 초기화"""
+        self.engine = create_async_engine(
+            self.database_url,
+            echo=False,
+            pool_pre_ping=True,  # 💡 DB 연결 확인 후 재사용
+            pool_recycle=3600,   # 💡 1시간마다 커넥션 재생성
+            future=True
+        )
         self.async_session = async_sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)
-        # logger.info("AsyncDatabase engine created.")
+        logger.info("✅ AsyncDatabase engine initialized.")
+
+    async def _reconnect(self):
+        """연결이 끊긴 경우 재연결"""
+        logger.warning("⚠️  Database connection lost. Trying to reconnect...")
+        await asyncio.sleep(1)
+        await self._initialize()
 
     @asynccontextmanager
     async def transaction(self):
+        """트랜잭션"""
         session = self.async_session()
         try:
             yield session
             await session.commit()
-            # logger.info("Async transaction committed.")
         except Exception as e:
             await session.rollback()
-            # logger.error(f"Async transaction rollback: {e}")
+            logger.error(f"Async transaction rollback: {e}")
             raise
         finally:
             await session.close()
 
+    async def _execute_with_reconnect(self, func, *args, **kwargs):
+        """공통: 연결 끊김 시 재시도 래퍼"""
+        try:
+            return await func(*args, **kwargs)
+        except (OperationalError, InterfaceError) as e:
+            logger.warning(f"DB connection error: {e}. Retrying...")
+            await self._reconnect()
+            # 재시도
+            return await func(*args, **kwargs)
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemy error: {e}")
+            raise
+
     async def execute(self, query, params=None):
-        async with self.async_session() as session:
-            result = await session.execute(text(query), params or {})
-            await session.commit()
-            return result
+        async def _exec():
+            async with self.async_session() as session:
+                result = await session.execute(text(query), params or {})
+                await session.commit()
+                return result
+
+        return await self._execute_with_reconnect(_exec)
 
     async def fetchall(self, query, params=None):
-        try:
+        async def _fetch():
             async with self.async_session() as session:
                 result = await session.execute(text(query), params or {})
                 return [dict(row) for row in result.mappings()]
-        except Exception as e:
-            print(e)
+
+        return await self._execute_with_reconnect(_fetch)
 
     async def fetchone(self, query, params=None):
-        async with self.async_session() as session:
-            result = await session.execute(text(query), params or {})
-            row = result.mappings().first()
-            return dict(row) if row else None
+        async def _fetch_one():
+            async with self.async_session() as session:
+                result = await session.execute(text(query), params or {})
+                row = result.mappings().first()
+                return dict(row) if row else None
+
+        return await self._execute_with_reconnect(_fetch_one)
 
     async def insert_one(self, table, data: dict):
         cols = ", ".join(data.keys())
@@ -96,8 +134,10 @@ class AsyncDatabase:
         if update_on_duplicate:
             updates = ", ".join([f"{k}=VALUES({k})" for k in data_list[0].keys()])
             query += f" ON DUPLICATE KEY UPDATE {updates}"
-        async with self.transaction() as session:
-            await session.execute(text(query), data_list)
+        async def _insert_many():
+            async with self.transaction() as session:
+                await session.execute(text(query), data_list)
+        await self._execute_with_reconnect(_insert_many)
 
     async def update(self, query, params=None):
         await self.execute(query, params)
@@ -112,8 +152,9 @@ class AsyncDatabase:
         ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci
         """
         await self.execute(query)
-    
-async def get_async_session() -> AsyncSession:    
+
+
+async def get_async_session() -> AsyncSession:
     async with async_db.async_session() as session:
         yield session
 
@@ -121,8 +162,7 @@ async def get_async_session() -> AsyncSession:
 # -----------------------------
 # 모듈 레벨 객체
 # -----------------------------
-# sync_db = SyncDatabase()
 async_db = AsyncDatabase()
 
 def get_async_db():
-    return async_db    
+    return async_db

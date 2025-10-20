@@ -17,7 +17,7 @@ app = FastAPI(title="Pincash Reward App API", lifespan=lifespan)
 # ✅ 미들웨어 등록
 app.middleware("http")(logging_middleware)
 
-app.include_router(code.router, prefix="/list",tags=["코드"])
+app.include_router(code.router, prefix="/code",tags=["코드"])
 # ✅ 라우터 등록
 app.include_router(auth.router, prefix="/auth",tags=["로그인, 회원가입, 아이디/비밀번호찾기"])
 # app.include_router(signup.router, prefix="/signup", tags=["SignUp"])

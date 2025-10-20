@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from reward_app.middleware.logging_middleware import logging_middleware
-from reward_app.routes import auth, notice, quote, quiz, referral, attendance
+from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code
 from reward_app.docs.openapi_custom import custom_openapi
 from contextlib import asynccontextmanager
 from reward_app.core.security import get_current_user
@@ -17,6 +17,7 @@ app = FastAPI(title="Pincash Reward App API", lifespan=lifespan)
 # ✅ 미들웨어 등록
 app.middleware("http")(logging_middleware)
 
+app.include_router(code.router, prefix="/list",tags=["코드"])
 # ✅ 라우터 등록
 app.include_router(auth.router, prefix="/auth",tags=["로그인, 회원가입, 아이디/비밀번호찾기"])
 # app.include_router(signup.router, prefix="/signup", tags=["SignUp"])

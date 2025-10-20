@@ -13,8 +13,8 @@ import datetime
 import random
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from models.giftishow_send_model import GiftishowSend
-from models.send_request import SendRequest
+from giftshop_app.models.giftishow_send_model import GiftishowSend
+from giftshop_app.models.send_request import SendRequest
 
 # 경로 설정
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

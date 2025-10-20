@@ -2,7 +2,7 @@ import ipaddress
 from fastapi import Request, HTTPException, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from database.db_core import get_async_session
+from giftshop_app.database.db_core import get_async_session
 
 async def verify_ext_access(
     request: Request,

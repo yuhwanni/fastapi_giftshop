@@ -1,4 +1,4 @@
-pip install fastapi uvicorn[standard] sqlalchemy dotenv aiomysql asyncio python-dotenv aiomysql httpx typing-inspect apscheduler
+pip install fastapi uvicorn[standard] sqlalchemy dotenv aiomysql asyncio python-dotenv aiomysql httpx typing-inspect apscheduler python-jose[cryptography] bcrypt email-validator
 
 # 포트 변경
 uvicorn main:app --host 0.0.0.0 --port 8001
@@ -12,6 +12,8 @@ nohup /usr/local/bin/python3.11 -m uvicorn main:app --host 0.0.0.0 --port 8001 >
 
 nohup /usr/local/bin/python3.11 /usr/local/bin/uvicorn main:app --host 0.0.0.0 --port 8001
 
+nohup /usr/local/bin/python3.11 /home/git_project_2025/fastapi_giftshop/run_giftshop.py > /home/git_project_2025/giftshop_app.out 2>&1 &
+nohup /usr/local/bin/python3.11 /home/git_project_2025/fastapi_giftshop/run_rewardapp.py > /home/git_project_2025/reward_app.out 2>&1 &
 
 # 기프티쇼에서 브랜드와 상품 가져오기
 python ./batch/fetch_brand_goods_batch.py

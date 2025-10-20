@@ -10,10 +10,10 @@ import httpx
 # 경로 설정
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database.db_core import AsyncDatabase, get_async_db, get_async_session
-from models.brand_model import Brand
-from models.goods_model import Goods
-from utils.slack import send_slack  # 슬랙 알림 유틸
+from giftshop_app.database.db_core import AsyncDatabase, get_async_db, get_async_session
+from giftshop_app.models.brand_model import Brand
+from giftshop_app.models.goods_model import Goods
+from giftshop_app.utils.slack import send_slack  # 슬랙 알림 유틸
 from datetime import datetime
 
 

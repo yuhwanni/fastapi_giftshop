@@ -10,19 +10,19 @@ from datetime import datetime
 from dotenv import load_dotenv
 import httpx
 
-from utils.giftishow import fetch_coupon_info
+from giftshop_app.utils.giftishow import fetch_coupon_info
 
 
 
-from database.db_core import AsyncDatabase, get_async_db, get_async_session
-from models.brand_model import Brand
-from models.goods_model import Goods
-from utils.slack import send_slack  # 슬랙 알림 유틸
+from giftshop_app.database.db_core import AsyncDatabase, get_async_db, get_async_session
+from giftshop_app.models.brand_model import Brand
+from giftshop_app.models.goods_model import Goods
+from giftshop_app.utils.slack import send_slack  # 슬랙 알림 유틸
 from datetime import datetime
 
 from sqlalchemy import update
 from sqlalchemy import select
-from models.giftishow_send_model import GiftishowSend
+from giftshop_app.models.giftishow_send_model import GiftishowSend
 
 load_dotenv()
 

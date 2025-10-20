@@ -180,7 +180,7 @@ async def send_sms(auth_token: str =Query(title="auth_token",description="auth_t
     await db.commit()
     
     if result_code == 1000:
-        return make_resp("S")
+        return make_resp("S", {"인증번호(임시로 보여짐):":verify_code})
     else:
         return make_resp("E4")    
 

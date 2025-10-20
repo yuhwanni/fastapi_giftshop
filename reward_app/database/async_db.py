@@ -32,11 +32,11 @@ logger.addHandler(console_handler)
 # -----------------------------
 # 환경 변수
 # -----------------------------
-DB_USER = os.getenv("DB_USER")
-DB_PASS = os.getenv("DB_PASS")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "3306")
-DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER2")
+DB_PASS = os.getenv("DB_PASS2")
+DB_HOST = os.getenv("DB_HOST2", "localhost")
+DB_PORT = os.getenv("DB_PORT2", "3306")
+DB_NAME = os.getenv("DB_NAME2")
 
 # -----------------------------
 # AsyncDatabase

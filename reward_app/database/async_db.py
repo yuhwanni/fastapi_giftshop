@@ -69,11 +69,8 @@ class AsyncDatabase:
                 pool_reset_on_return='rollback',
                 connect_args={
                     "connect_timeout": 10,
-                    "read_timeout": 60,
-                    "write_timeout": 60,
                     "autocommit": False,
                     "charset": "utf8mb4",
-                    "use_unicode": True,
                 },
             )
             

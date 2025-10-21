@@ -32,7 +32,7 @@ router = APIRouter()
 
 # 회원가입 페이지 진입시 호출
 @router.post("/token", name="회원가입, 아이디찾기,비밀번호 찾기 전 호출하여 토큰 저장")
-async def token(db: AsyncSession = Depends(get_async_session)):
+async def token(phone_uuid: str =Query(title="phone_uuid",description="기기값"), db: AsyncSession = Depends(get_async_session)):
     auth_token = ""
     while True:
         auth_token = secrets.token_urlsafe(32)
@@ -44,6 +44,7 @@ async def token(db: AsyncSession = Depends(get_async_session)):
         if total_count == 0:
             stmt = insert(AuthVerify).values(
                 auth_token=auth_token,
+                phone_uuid=phone_uuid
             )
             await db.execute(stmt)            
             await db.commit()

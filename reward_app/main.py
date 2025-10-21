@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from reward_app.middleware.logging_middleware import logging_middleware
-from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code
+from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login
 from reward_app.docs.openapi_custom import custom_openapi
 from contextlib import asynccontextmanager
 from reward_app.core.security import get_current_user
@@ -18,8 +18,10 @@ app = FastAPI(title="Pincash Reward App API", lifespan=lifespan)
 app.middleware("http")(logging_middleware)
 
 app.include_router(code.router, prefix="/code",tags=["코드"])
+
+app.include_router(login.router, tags=["로그인"])
 # ✅ 라우터 등록
-app.include_router(auth.router, prefix="/auth",tags=["로그인, 회원가입, 아이디/비밀번호찾기"])
+app.include_router(auth.router, prefix="/auth",tags=["회원가입, 아이디/비밀번호찾기"])
 # app.include_router(signup.router, prefix="/signup", tags=["SignUp"])
 app.include_router(notice.router, prefix="/notice", tags=["공지"], dependencies=[Depends(get_current_user)])
 
@@ -27,8 +29,9 @@ app.include_router(quote.router, prefix="/quote",tags=["명언"], dependencies=[
 app.include_router(quiz.router, prefix="/quiz",tags=["퀴즈"], dependencies=[Depends(get_current_user)])
 app.include_router(referral.router, prefix="/referral",tags=["추천인"], dependencies=[Depends(get_current_user)])
 
-# app.include_router(attendance.router, prefix="/attendance",tags=["출석체크"], dependencies=[Depends(get_current_user)])
 app.include_router(attendance.router, prefix="/attendance",tags=["출석체크"])
+# app.include_router(attendance.router, prefix="/attendance",tags=["출석체크"], dependencies=[Depends(get_current_user)])
+
 
 
 # ✅ Swagger 전역 인증 적용

@@ -30,29 +30,6 @@ from reward_app.service.point_service import save_point
 
 router = APIRouter()
 
-@router.post("/login", name="이메일 로그인")
-async def login(email: str = "hong@example.com", password: str = "user_password123", db: AsyncSession = Depends(get_async_session)):
-# async def login(email: str =Query(title="email",description="사용자 아이디 email hong@example.com"), password: str =Query(title="password",description="비밀번호 user_password123"), db: AsyncSession = Depends(get_async_session)):
-    r = await db.execute(select(Member).where(Member.user_email==email))
-    member = r.scalars().first()
-
-    if member is None:
-        return make_resp("E1")
-
-    db_hashed = member.user_pwd
-
-    if bcrypt.checkpw(password.encode('utf-8'), db_hashed.encode('utf-8')):        
-        upd_stmt = update(Member).where(Member.user_email == email).values(
-            last_login_date=datetime.now()
-        )
-        await db.execute(upd_stmt)
-        await db.commit() 
-    else:
-        return make_resp("E1")
-    
-    token = await create_access_token({"sub": member.user_email, "user_seq": member.user_seq})
-    return make_resp("S", {"access_token": token})
-
 # 회원가입 페이지 진입시 호출
 @router.post("/token", name="회원가입, 아이디찾기,비밀번호 찾기 전 호출하여 토큰 저장")
 async def token(db: AsyncSession = Depends(get_async_session)):
@@ -223,6 +200,8 @@ async def join_check(auth_token: str =Query(title="auth_token",description="auth
 , email: str =Query(title="email",description="이메일")
 , pwd: str =Query(title="pwd",description="비밀번호")
 , re_pwd: str =Query(title="re_pwd",description="비밀번호")
+, terms_yn: str =Query(title="terms_yn",description="이용약관 동의")
+, privacy_yn: str =Query(title="privacy_yn",description="개인정보 수집 동의")
 , db: AsyncSession = Depends(get_async_session)):    
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
@@ -260,6 +239,7 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
 , birth_year: str =Query(default=None, title="birth_year",description="출생년도")
 , location: str =Query(default=None, title="location",description="지역")
 , referral_code: str =Query(default=None, title="referral_code",description="추천인코드")
+, marketing_yn: str =Query(default=None, title="marketing_yn",description="마케팅 정보 수신 동의")
 , token: str =Query(default=None, title="token",description="푸쉬 토큰")
 , db: AsyncSession = Depends(get_async_session)):    
 
@@ -321,6 +301,7 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
         user_location=location,
         referral_code=gen_referral_code,
         user_token=token,
+        marketing_yn=marketing_yn
     ).returning(Member.user_seq)
     result = await db.execute(stmt)
     user_seq = result.scalar()

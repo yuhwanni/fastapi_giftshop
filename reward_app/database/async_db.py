@@ -15,7 +15,7 @@ load_dotenv()
 # 로그 설정
 # -----------------------------
 today_str = datetime.now().strftime("%Y%m%d")
-log_dir = os.path.join("logs", today_str)
+log_dir = os.path.join("rewardapp_logs", today_str)
 os.makedirs(log_dir, exist_ok=True)
 log_file_path = os.path.join(log_dir, "database.log")
 

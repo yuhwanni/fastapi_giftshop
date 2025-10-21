@@ -3,9 +3,30 @@ from starlette.types import Message
 from starlette.background import BackgroundTask
 from fastapi import Request, Response
 
+import os
+from logging.handlers import RotatingFileHandler
+from datetime import datetime
+
 logger = logging.getLogger("api_logger")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
+# -----------------------------
+# 로그 설정
+# -----------------------------
+today_str = datetime.now().strftime("%Y%m%d")
+log_dir = os.path.join("logs", today_str)
+os.makedirs(log_dir, exist_ok=True)
+log_file_path = os.path.join(log_dir, "database.log")
+
+logger = logging.getLogger("DatabaseLogger")
+logger.setLevel(logging.INFO)
+file_handler = RotatingFileHandler(log_file_path, maxBytes=5*1024*1024, backupCount=5, encoding="utf-8")
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 def end_log_info(res_body: bytes):
     logger.info(f"RESPONSE: {res_body.decode(errors='ignore')}")
@@ -43,7 +64,7 @@ async def logging_middleware(request: Request, call_next):
     #     media_type=response.media_type,
     #     background=task,
     # )
-    
+
     req_body = await request.body()
     await set_body(request, req_body)
     endpoint = f"{request.method} {request.url.path} {request.url.query} {req_body} {request.client.host} {request.headers}"

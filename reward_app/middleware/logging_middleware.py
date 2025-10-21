@@ -22,10 +22,32 @@ async def set_body(request: Request, body: bytes):
 
 
 async def logging_middleware(request: Request, call_next):
+    # req_body = await request.body()
+    # await set_body(request, req_body)
+
+    # endpoint = f"{request.method} {request.url.path}?{request.url.query} | {request.client.host} | BODY={req_body.decode(errors='ignore')}"
+    # entry_log_info(endpoint)
+
+    # response = await call_next(request)
+
+    # res_body = b""
+    # async for chunk in response.body_iterator:
+    #     res_body += chunk
+
+    # task = BackgroundTask(end_log_info, res_body)
+
+    # return Response(
+    #     content=res_body,
+    #     status_code=response.status_code,
+    #     headers=dict(response.headers),
+    #     media_type=response.media_type,
+    #     background=task,
+    # )
+    
     req_body = await request.body()
     await set_body(request, req_body)
+    endpoint = f"{request.method} {request.url.path} {request.url.query} {req_body} {request.client.host} {request.headers}"
 
-    endpoint = f"{request.method} {request.url.path}?{request.url.query} | {request.client.host} | BODY={req_body.decode(errors='ignore')}"
     entry_log_info(endpoint)
 
     response = await call_next(request)
@@ -34,12 +56,12 @@ async def logging_middleware(request: Request, call_next):
     async for chunk in response.body_iterator:
         res_body += chunk
 
-    task = BackgroundTask(end_log_info, res_body)
+    # task = BackgroundTask(end_log_info, res_body)
 
     return Response(
         content=res_body,
         status_code=response.status_code,
         headers=dict(response.headers),
         media_type=response.media_type,
-        background=task,
+        # background=task,
     )

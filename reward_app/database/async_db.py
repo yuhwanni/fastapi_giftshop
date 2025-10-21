@@ -54,10 +54,23 @@ class AsyncDatabase:
             self.database_url,
             echo=False,
             pool_pre_ping=True,  # 💡 DB 연결 확인 후 재사용
-            pool_recycle=3600,   # 💡 1시간마다 커넥션 재생성
+            pool_recycle=3600,   # 💡 1시간마다 커넥션 재생성            
+            pool_size=10,        # 기본 연결 풀 크기
+            max_overflow=20,     # 최대 추가 연결
+            # 또는 연결 풀 사용 안 함
+            # poolclass=NullPool,
+            connect_args={
+                "connect_timeout": 10,
+                "autocommit": False,
+            },
             future=True
         )
-        self.async_session = async_sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)
+        self.async_session = async_sessionmaker(
+            self.engine, 
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autocommit=False,
+            autoflush=False,)
         logger.info("✅ AsyncDatabase engine initialized.")
 
     async def _reconnect(self):

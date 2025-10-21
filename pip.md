@@ -1,4 +1,8 @@
-pip install fastapi uvicorn[standard] sqlalchemy dotenv aiomysql asyncio python-dotenv aiomysql httpx typing-inspect apscheduler python-jose[cryptography] bcrypt email-validator
+pip install fastapi uvicorn[standard] sqlalchemy aiomysql dotenv asyncio python-dotenv httpx typing-inspect apscheduler python-jose[cryptography] bcrypt email-validator
+
+aiomysql
+
+
 
 # 포트 변경
 uvicorn main:app --host 0.0.0.0 --port 8001

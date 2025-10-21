@@ -22,6 +22,15 @@ app = FastAPI(title="Pincash Reward App API", lifespan=lifespan)
 # ✅ 미들웨어 등록
 app.middleware("http")(logging_middleware)
 
+@app.get("/health")
+async def health():
+    is_healthy = await async_db.health_check()
+    pool_status = await async_db.get_pool_status()
+    return {
+        "database": "정상" if is_healthy else "비정상",
+        "pool": pool_status
+    }
+
 app.include_router(code.router, prefix="/code",tags=["코드"])
 
 app.include_router(login.router, tags=["로그인"])

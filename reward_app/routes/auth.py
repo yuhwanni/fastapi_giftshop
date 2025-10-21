@@ -287,7 +287,7 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
         return make_resp("E18")
     if birth_year is not None and len(birth_year) !=4:
         return make_resp("E19")
-    if birth_year is not None and len(birth_year) ==4 and birth_year>max_year:
+    if birth_year is not None and len(birth_year) ==4 and int(birth_year)>max_year:
         return make_resp("E20" , {"msg":f"{max_year} 까지만 입력가능"})
 
     password_bytes = pwd.encode('utf-8')

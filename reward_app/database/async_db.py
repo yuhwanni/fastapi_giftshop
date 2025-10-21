@@ -46,42 +46,59 @@ class AsyncDatabase:
         self.database_url = f"mysql+aiomysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
         self.engine = None
         self.async_session = None
-        asyncio.create_task(self._initialize())
+        self._initialized = False
+        self._init_lock = asyncio.Lock()
 
     async def _initialize(self):
         """엔진과 세션 초기화"""
-        self.engine = create_async_engine(
-            self.database_url,
-            echo=False,
-            pool_pre_ping=True,  # 💡 DB 연결 확인 후 재사용
-            pool_recycle=3600,   # 💡 1시간마다 커넥션 재생성            
-            pool_size=10,        # 기본 연결 풀 크기
-            max_overflow=20,     # 최대 추가 연결
-            # 또는 연결 풀 사용 안 함
-            # poolclass=NullPool,
-            connect_args={
-                "connect_timeout": 10,
-                "autocommit": False,
-            },
-            future=True
-        )
-        self.async_session = async_sessionmaker(
-            self.engine, 
-            class_=AsyncSession,
-            expire_on_commit=False,
-            autocommit=False,
-            autoflush=False,)
-        logger.info("✅ AsyncDatabase engine initialized.")
+        async with self._init_lock:
+            if self._initialized:
+                return
+            
+            self.engine = create_async_engine(
+                self.database_url,
+                echo=False,
+                pool_pre_ping=True,
+                pool_recycle=3600,
+                pool_size=10,
+                max_overflow=20,
+                connect_args={
+                    "connect_timeout": 10,
+                    "autocommit": False,
+                },
+                future=True
+            )
+            self.async_session = async_sessionmaker(
+                self.engine, 
+                class_=AsyncSession,
+                expire_on_commit=False,
+                autocommit=False,
+                autoflush=False,
+            )
+            self._initialized = True
+            logger.info("✅ AsyncDatabase engine initialized.")
+
+    async def _ensure_initialized(self):
+        """초기화 보장"""
+        if not self._initialized:
+            await self._initialize()
 
     async def _reconnect(self):
         """연결이 끊긴 경우 재연결"""
         logger.warning("⚠️  Database connection lost. Trying to reconnect...")
+        
+        # 기존 엔진 정리
+        if self.engine:
+            await self.engine.dispose()
+        
+        self._initialized = False
         await asyncio.sleep(1)
         await self._initialize()
 
     @asynccontextmanager
     async def transaction(self):
         """트랜잭션"""
+        await self._ensure_initialized()
         session = self.async_session()
         try:
             yield session
@@ -95,6 +112,8 @@ class AsyncDatabase:
 
     async def _execute_with_reconnect(self, func, *args, **kwargs):
         """공통: 연결 끊김 시 재시도 래퍼"""
+        await self._ensure_initialized()
+        
         try:
             return await func(*args, **kwargs)
         except (OperationalError, InterfaceError) as e:
@@ -147,9 +166,11 @@ class AsyncDatabase:
         if update_on_duplicate:
             updates = ", ".join([f"{k}=VALUES({k})" for k in data_list[0].keys()])
             query += f" ON DUPLICATE KEY UPDATE {updates}"
+        
         async def _insert_many():
             async with self.transaction() as session:
                 await session.execute(text(query), data_list)
+        
         await self._execute_with_reconnect(_insert_many)
 
     async def update(self, query, params=None):
@@ -166,8 +187,15 @@ class AsyncDatabase:
         """
         await self.execute(query)
 
+    async def close(self):
+        """엔진 종료"""
+        if self.engine:
+            await self.engine.dispose()
+            logger.info("✅ AsyncDatabase engine closed.")
+
 
 async def get_async_session() -> AsyncSession:
+    await async_db._ensure_initialized()
     async with async_db.async_session() as session:
         yield session
 

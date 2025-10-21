@@ -54,7 +54,8 @@ async def token(phone_uuid: str =Query(title="phone_uuid",description="기기값
 
 # 문자 전송 
 @router.post("/send_sms", name="문자 보내기")
-async def send_sms(auth_token: str =Query(title="auth_token",description="auth_token"), phone: str =Query(title="phone",description="휴대폰 번호"), db: AsyncSession = Depends(get_async_session)):
+async def send_sms(auth_token: str =Query(title="auth_token",description="auth_token"), phone: str =Query(title="phone",description="휴대폰 번호")
+    , db: AsyncSession = Depends(get_async_session)):
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
     r = await db.execute(stmt)

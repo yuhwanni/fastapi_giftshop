@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 today_str = datetime.now().strftime("%Y%m%d")
 log_dir = os.path.join("logs", today_str)
 os.makedirs(log_dir, exist_ok=True)
-log_file_path = os.path.join(log_dir, "database.log")
+log_file_path = os.path.join(log_dir, "web.log")
 
 logger = logging.getLogger("DatabaseLogger")
 logger.setLevel(logging.INFO)

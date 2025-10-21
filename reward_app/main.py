@@ -5,9 +5,14 @@ from reward_app.docs.openapi_custom import custom_openapi
 from contextlib import asynccontextmanager
 from reward_app.core.security import get_current_user
 
+from reward_app.database.async_db import async_db
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print('start')    
+    print('start')
+
+    await async_db._initialize()
+
     # app.openapi = lambda: custom_openapi(app)
     yield    
     print('end')

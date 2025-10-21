@@ -15,7 +15,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Pincash Reward App API", lifespan=lifespan)
 
 # ✅ 미들웨어 등록
-app.middleware("http")(logging_middleware)
+# app.middleware("http")(logging_middleware)
 
 app.include_router(code.router, prefix="/code",tags=["코드"])
 

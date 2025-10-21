@@ -32,7 +32,7 @@ router = APIRouter()
 
 # 회원가입 페이지 진입시 호출
 @router.post("/token", name="회원가입, 아이디찾기,비밀번호 찾기 전 호출하여 토큰 저장")
-async def token(phone_uuid: str =Query(title="phone_uuid",description="기기값"), db: AsyncSession = Depends(get_async_session)):
+async def token(device_id: str =Query(title="device_id",description="기기값"), db: AsyncSession = Depends(get_async_session)):
     auth_token = ""
     while True:
         auth_token = secrets.token_urlsafe(32)
@@ -44,7 +44,7 @@ async def token(phone_uuid: str =Query(title="phone_uuid",description="기기값
         if total_count == 0:
             stmt = insert(AuthVerify).values(
                 auth_token=auth_token,
-                phone_uuid=phone_uuid
+                device_id=device_id
             )
             await db.execute(stmt)            
             await db.commit()
@@ -248,6 +248,7 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
 , referral_code: str =Query(default=None, title="referral_code",description="추천인코드")
 , marketing_yn: str =Query(default=None, title="marketing_yn",description="마케팅 정보 수신 동의")
 , token: str =Query(default=None, title="token",description="푸쉬 토큰")
+, device_id: str =Query(default=None, title="token",description="device id")
 , db: AsyncSession = Depends(get_async_session)):    
 
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
@@ -309,18 +310,21 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
         user_location=location,
         referral_code=gen_referral_code,
         user_token=token,
-        marketing_yn=marketing_yn
+        marketing_yn=marketing_yn,
+        device_id=device_id
     ).returning(Member.user_seq)
     result = await db.execute(stmt)
     user_seq = result.scalar()
 
     load_dotenv()
     JOIN_POINT = int(os.getenv("JOIN_POINT"))
+    REFERRAL_POINT = int(os.getenv("REFERRAL_POINT"))
+    
     result2 = await save_point(db, user_seq, "회원가입 포인트 적립", JOIN_POINT, "PC_MEMBER", {"user_seq": user_seq}, "J")
 
     # 추천인 코드 있을 경우 포인트 지급
     if referral_code is not None:
-        REFERRAL_POINT = int(os.getenv("REFERRAL_POINT"))
+        
         # REFERRAL_JOIN_AD_POINT = int(os.getenv("REFERRAL_JOIN_AD_POINT"))
 
         stmt = select(Member).where(Member.referral_code == referral_code)

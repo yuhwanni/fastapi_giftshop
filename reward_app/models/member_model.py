@@ -19,6 +19,7 @@ class Member(Base):
     time_of_birth = Column(String(5), nullable=True, comment="태어난시각")
     user_location = Column(String(50), nullable=True, comment="위치")
     user_token = Column(String(255), nullable=True, comment="푸쉬토큰")
+    device_id = Column(String(255), nullable=True, comment="디바이스 아이디")
     user_point = Column(Integer, nullable=False, server_default=text("0"), comment="회원포인트")
     referral_code = Column(String(10), nullable=False, server_default=text("''"), comment="추천인코드")
     user_stat = Column(Enum('Y', 'N'), nullable=False, server_default=text("'Y'"), comment="상태(Y사용:N중지)")

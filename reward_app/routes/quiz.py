@@ -142,7 +142,7 @@ async def quiz_answer(
     quiz_join = r.scalars().first() 
     
     if quiz_join is not None:
-        return make_resp("E20")
+        return make_resp("E200")
         
     is_correct = "N"
     if answer == quiz.answer:
@@ -182,4 +182,4 @@ async def quiz_answer(
     if result1 and result2:
         return make_resp("S", {"is_correct":is_correct})
     else:
-        return make_resp("E21")
+        return make_resp("E201")

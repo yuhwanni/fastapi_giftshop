@@ -219,6 +219,11 @@ async def join_check(auth_token: str =Query(title="auth_token",description="auth
         return make_resp("E15")
     if pwd != re_pwd:
         return make_resp("E14")
+    
+    if terms_yn != "Y":
+        return make_resp("E20")
+    if privacy_yn != "Y":
+        return make_resp("E21")        
 
     stmt = select(Member).where(Member.user_email==email)
     total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))

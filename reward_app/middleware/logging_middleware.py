@@ -7,26 +7,11 @@ import os
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
 
+from reward_app.utils.log_util import logger
+
 logger = logging.getLogger("api_logger")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
-# -----------------------------
-# 로그 설정
-# -----------------------------
-today_str = datetime.now().strftime("%Y%m%d")
-log_dir = os.path.join("logs", today_str)
-os.makedirs(log_dir, exist_ok=True)
-log_file_path = os.path.join(log_dir, "web.log")
-
-logger = logging.getLogger("DatabaseLogger")
-logger.setLevel(logging.INFO)
-file_handler = RotatingFileHandler(log_file_path, maxBytes=5*1024*1024, backupCount=5, encoding="utf-8")
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-file_handler.setFormatter(formatter)
-console_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
 
 def end_log_info(res_body: bytes):
     logger.info(f"RESPONSE: {res_body.decode(errors='ignore')}")

@@ -8,7 +8,7 @@ class AuthVerify(Base):
 
     auth_token = Column(String(64), nullable=False, primary_key=True, comment="가입 토큰")
     phone = Column(String(20), nullable=True, comment="전화번호")
-    phone_uuid = Column(String(64), nullable=False, primary_key=True, comment="기기값")
+    device_id = Column(String(64), nullable=False, primary_key=True, comment="디바이스 아이디")
     verify_code = Column(String(6), nullable=True, comment="인증번호")
     user_email = Column(String(255), nullable=True, comment="이메일. 비밀번호변경시 사용")
     expire_date = Column(DateTime, nullable=True, comment="인증기한")

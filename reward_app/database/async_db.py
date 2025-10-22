@@ -48,7 +48,7 @@ class AsyncDatabase:
                 self.database_url,
                 echo=False,
                 pool_pre_ping=True,        # 연결 검증
-                pool_recycle=1800,         # 30분마다 재생성
+                pool_recycle=6,         # 30분마다 재생성
                 pool_timeout=30,           # 풀 대기 타임아웃
                 pool_size=5,               # 기본 풀 크기
                 max_overflow=10,           # 추가 연결 허용

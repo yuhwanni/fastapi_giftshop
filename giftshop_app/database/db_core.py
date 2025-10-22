@@ -54,7 +54,7 @@ class AsyncDatabase:
             self.database_url,
             echo=False,
             pool_pre_ping=True,  # 💡 DB 연결 확인 후 재사용
-            pool_recycle=3600,   # 💡 1시간마다 커넥션 재생성
+            pool_recycle=6,   # 💡 1시간마다 커넥션 재생성
             future=True
         )
         self.async_session = async_sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)

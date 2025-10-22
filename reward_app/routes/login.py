@@ -52,3 +52,134 @@ async def login(email: str = "hong@example.com", password: str = "user_password1
     
     token = await create_access_token({"sub": member.user_email, "user_seq": member.user_seq})
     return make_resp("S", {"access_token": token})
+
+
+@router.post("/naver_login", name="네이버 로그인(개발중)")
+async def naver_login(
+    access_token: str =Query(description="access_token")
+    , db: AsyncSession = Depends(get_async_session)):
+    
+    url = "https://openapi.naver.com/v1/nid/me"
+    headers = {
+        # "Content-Type": "application/json; charset=utf-8",
+        "Authorization": f"Bearer {access_token}"
+    }
+    # payload = {"phone": "01012345678", "code": "123456"}
+    payload = {}
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=payload, headers=headers)
+        data = response.json()
+        resultcode = data.get('resultcode')
+        message = data.get('message')
+
+        if resultcode == "00":
+            user_sns_key = data.get('response').get('id')
+            user_name = data.get('response').get('nickname')
+            # user_sns_key = data.get('response').get('name')
+            user_email = data.get('response').get('email')
+            user_gender = data.get('response').get('gender')
+            # user_sns_key = data.get('response').get('age')
+            birthday = data.get('response').get('birthday')
+            user_img = data.get('response').get('profile_image')
+            birthyear = data.get('response').get('birthyear')
+            user_phone = data.get('response').get('mobile')
+
+            user_birth = birthyear+'-'+birthday
+
+            return make_resp("S")
+        else:
+            return make_resp("E50",{"msg":message, "naverResultCode":resultcode})        
+
+    return make_resp("E101")            
+
+@router.post("/kakao_login", name="카카오 로그인(개발중)")
+async def kakao_login(
+    access_token: str =Query(description="access_token")
+    , db: AsyncSession = Depends(get_async_session)):
+    
+    url = "https://kapi.kakao.com/v2/user/me"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+        "Authorization": f"Bearer {access_token}"
+    }
+    # payload = {"phone": "01012345678", "code": "123456"}
+    payload = {"secure_resource":True}
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=payload, headers=headers)
+        status_code = response.status_code
+        data = response.json()
+        
+        resultcode = data.get('code')
+        message = data.get('msg')
+
+        if status_code == 200:            
+            # 기본 정보
+            id = data.get('id')  # Long 회원번호 필수 X
+            connected_at = data.get('connected_at')  # Datetime 서비스 연결 완료 시각 필수 X
+
+            # 프로필 동의 관련
+            profile_needs_agreement = data.get('kakao_account', {}).get('profile_needs_agreement')  # Boolean 사용자 동의 시 프로필 정보(닉네임/프로필 사진) 제공 가능 필수 X
+            profile_nickname_needs_agreement = data.get('kakao_account', {}).get('profile_nickname_needs_agreement')  # Boolean 사용자 동의 시 닉네임 제공 가능 필수 X
+            profile_image_needs_agreement = data.get('kakao_account', {}).get('profile_image_needs_agreement')  # Boolean 사용자 동의 시 프로필 사진 제공 가능 필수 X
+
+            # 프로필 정보
+            nickname = data.get('kakao_account', {}).get('profile', {}).get('nickname')  # String 닉네임 필수 X
+            profile_image_url = data.get('kakao_account', {}).get('profile', {}).get('profile_image_url')  # String 프로필 이미지 URL, 640x640 필수 X
+            thumbnail_image_url = data.get('kakao_account', {}).get('profile', {}).get('thumbnail_image_url')  # String 프로필 미리보기 이미지 URL, 110x110 필수 X
+            is_default_image = data.get('kakao_account', {}).get('profile', {}).get('is_default_image')  # Boolean 기본 이미지 여부 필수 X
+            is_default_nickname = data.get('kakao_account', {}).get('profile', {}).get('is_default_nickname')  # Boolean 닉네임이 기본 닉네임인지 여부 X
+
+            # 이름
+            name_needs_agreement = data.get('kakao_account', {}).get('name_needs_agreement')  # Boolean 사용자 동의 시 카카오계정 이름 제공 가능 필수 X
+            name = data.get('kakao_account', {}).get('name')  # String 카카오계정 이름 필수 X
+
+            # 이메일
+            email_needs_agreement = data.get('kakao_account', {}).get('email_needs_agreement')  # Boolean 사용자 동의 시 카카오계정 대표 이메일 제공 가능 필수 X
+            is_email_valid = data.get('kakao_account', {}).get('is_email_valid')  # Boolean 이메일 유효 여부 필수 X
+            is_email_verified = data.get('kakao_account', {}).get('is_email_verified')  # Boolean 이메일 인증 여부 필수 X
+            email = data.get('kakao_account', {}).get('email')  # String 카카오계정 대표 이메일 필수 X
+
+            # 연령대
+            age_range_needs_agreement = data.get('kakao_account', {}).get('age_range_needs_agreement')  # Boolean 사용자 동의 시 연령대 제공 가능 필수 X
+            age_range = data.get('kakao_account', {}).get('age_range')  # String 연령대 (1~9, 10~14, 15~19, 20~29, 30~39, 40~49, 50~59, 60~69, 70~79, 80~89, 90~) 필수 X
+
+            # 출생 연도
+            birthyear_needs_agreement = data.get('kakao_account', {}).get('birthyear_needs_agreement')  # Boolean 사용자 동의 시 출생 연도 제공 가능 필수 X
+            birthyear = data.get('kakao_account', {}).get('birthyear')  # String 출생 연도 (YYYY 형식) 필수 X
+
+            # 생일
+            birthday_needs_agreement = data.get('kakao_account', {}).get('birthday_needs_agreement')  # Boolean 사용자 동의 시 생일 제공 가능 필수 X
+            birthday = data.get('kakao_account', {}).get('birthday')  # String 생일 (MMDD 형식) 필수 X
+            birthday_type = data.get('kakao_account', {}).get('birthday_type')  # String 생일 타입 (SOLAR: 양력, LUNAR: 음력) 필수 X
+            is_leap_month = data.get('kakao_account', {}).get('is_leap_month')  # Boolean 생일의 윤달 여부 필수 X
+
+            # 성별
+            gender_needs_agreement = data.get('kakao_account', {}).get('gender_needs_agreement')  # Boolean 사용자 동의 시 성별 제공 가능 필수 X
+            gender = data.get('kakao_account', {}).get('gender')  # String 성별 (female: 여성, male: 남성) 필수 X
+
+            # 전화번호
+            phone_number_needs_agreement = data.get('kakao_account', {}).get('phone_number_needs_agreement')  # Boolean 사용자 동의 시 전화번호 제공 가능 필수 X
+            phone_number = data.get('kakao_account', {}).get('phone_number')  # String 카카오계정의 전화번호 (+82 00-0000-0000 형식) 필수 X
+
+            # CI (연계정보)
+            ci_needs_agreement = data.get('kakao_account', {}).get('ci_needs_agreement')  # Boolean 사용자 동의 시 CI 참고 가능 필수 X
+            ci = data.get('kakao_account', {}).get('ci')  # String 연계정보 필수 X
+            ci_authenticated_at = data.get('kakao_account', {}).get('ci_authenticated_at')  # Datetime CI 발급 시각, UTC 필수 X
+
+            user_sns_key = id           
+            user_name = nickname            
+            user_email = email
+            user_gender = gender
+            birthday = birthday
+            user_img = thumbnail_image_url
+            birthyear = birthyear
+            user_phone = phone_number
+            user_birth = birthyear+'-'+birthday
+
+            return make_resp("S")
+        else:
+            return make_resp("E50",{"msg":message, "kakaoResultCode":resultcode})        
+
+    return make_resp("E101")   

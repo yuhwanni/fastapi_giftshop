@@ -242,7 +242,7 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
 , pwd: str =Query(title="pwd",description="비밀번호")
 , re_pwd: str =Query(title="re_pwd",description="비밀번호")
 , nickname: str =Query(title="nickname",description="닉네임")
-, gender: str =Query(default=None, title="gender",description="성별 F:여성,M:남성")
+, gender: str =Query(default=None, title="gender",description="성별 F:여성,M:남성, U:확인불가")
 , birth_year: str =Query(default=None, title="birth_year",description="출생년도")
 , location: str =Query(default=None, title="location",description="지역")
 , referral_code: str =Query(default=None, title="referral_code",description="추천인코드")

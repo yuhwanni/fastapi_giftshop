@@ -12,6 +12,7 @@ class Member(Base):
     user_pwd = Column(String(256), nullable=True, comment="패스워드")
     user_pwd2 = Column(String(256), nullable=True, comment="패스워드임시")
     user_name = Column(String(32), nullable=True, comment="이름")
+    nickname = Column(String(32), nullable=True, comment="닉네임")
     user_phone = Column(String(128), nullable=True, comment="전화번호")
     user_gender = Column(Enum('F', 'M'), nullable=True, comment="성별")
     user_birth = Column(String(10), nullable=True, comment="생년월일")

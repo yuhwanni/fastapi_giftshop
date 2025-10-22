@@ -49,7 +49,7 @@ async def token(device_id: str =Query(title="device_id",description="기기값")
             await db.execute(stmt)            
             await db.commit()
             break
-   
+    
     return make_resp("S", {"auth_token": auth_token})
 
 # 문자 전송 

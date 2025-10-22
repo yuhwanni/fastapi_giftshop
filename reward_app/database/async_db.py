@@ -64,7 +64,7 @@ class AsyncDatabase:
                 class_=AsyncSession,
                 expire_on_commit=False,
                 autocommit=False,
-                autoflush=False,
+                autoflush=False,                
             )
             
             self._initialized = True
@@ -115,7 +115,12 @@ class AsyncDatabase:
 async def get_async_session():
     await async_db._ensure_initialized()
     async with async_db.async_session() as session:
-        yield session
+        try:
+            yield session
+        except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
+            logger.error(f"DB Error: {e}")    
+        finally:
+            await session.close()
 
 
 # -----------------------------

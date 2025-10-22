@@ -6,6 +6,9 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import StreamingResponse
 from reward_app.utils.log_util import api_logger
+import traceback
+from reward_app.core.config import make_resp
+from fastapi.responses import JSONResponse
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -129,7 +132,18 @@ async def simple_logging_middleware(request: Request, call_next):
             f"Error: {str(e)} | Time: {process_time:.3f}s",
             exc_info=True
         )
-        raise
+        err_msg = traceback.format_exc()
+        api_logger.error(err_msg)  
+        
+        return JSONResponse(
+            status_code=500,
+            content={
+                "code":"E102",                
+                "error": str(e),
+                "msg": err_msg,
+                "path": str(request.url),
+            },
+        )
 
 
 # 특정 경로 제외용 미들웨어

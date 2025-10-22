@@ -26,6 +26,7 @@ import base64
 
 from reward_app.service.point_service import save_point
 
+from reward_app.utils.params import AgreementYn, GenderType
 
 
 router = APIRouter()
@@ -202,8 +203,8 @@ async def join_check(auth_token: str =Query(title="auth_token",description="auth
 , email: str =Query(title="email",description="이메일")
 , pwd: str =Query(title="pwd",description="비밀번호")
 , re_pwd: str =Query(title="re_pwd",description="비밀번호")
-, terms_yn: str =Query(title="terms_yn",description="이용약관 동의")
-, privacy_yn: str =Query(title="privacy_yn",description="개인정보 수집 동의")
+, terms_yn: AgreementYn =Query(title="terms_yn",description="이용약관 동의")
+, privacy_yn: AgreementYn =Query(title="privacy_yn",description="개인정보 수집 동의")
 , db: AsyncSession = Depends(get_async_session)):    
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
@@ -242,11 +243,11 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
 , pwd: str =Query(title="pwd",description="비밀번호")
 , re_pwd: str =Query(title="re_pwd",description="비밀번호")
 , nickname: str =Query(title="nickname",description="닉네임")
-, gender: str =Query(default=None, title="gender",description="성별 F:여성,M:남성, U:확인불가")
+, gender: GenderType =Query(default="U", title="gender",description="성별 F:여성,M:남성, U:확인불가")
 , birth_year: str =Query(default=None, title="birth_year",description="출생년도")
 , location: str =Query(default=None, title="location",description="지역")
 , referral_code: str =Query(default=None, title="referral_code",description="추천인코드")
-, marketing_yn: str =Query(default=None, title="marketing_yn",description="마케팅 정보 수신 동의")
+, marketing_yn: AgreementYn =Query(default=None, title="marketing_yn",description="마케팅 정보 수신 동의")
 , token: str =Query(default=None, title="token",description="푸쉬 토큰")
 , device_id: str =Query(default=None, title="token",description="device id")
 , db: AsyncSession = Depends(get_async_session)):    
@@ -276,7 +277,7 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
     if total_count >0:
         return make_resp("E8")
 
-    if gender not in ("F", "M"):
+    if gender not in ("F", "M", "U"):
         return make_resp("E16")
 
     if len(nickname)<2:
@@ -293,7 +294,6 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
         return make_resp("E20" , {"msg":f"{max_year} 까지만 입력가능"})
 
     password_bytes = pwd.encode('utf-8')
-
     # 2. 해시 생성 (salt 포함)
     hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
 

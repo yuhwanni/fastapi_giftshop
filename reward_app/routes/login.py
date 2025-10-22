@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session
 import bcrypt
 
-from sqlalchemy import select, insert, update, delete, func
+from sqlalchemy import select, insert, update, delete, func, and_
 
 from reward_app.models.member_model import Member
 from reward_app.models.sms_history_model import SmsHistory
@@ -31,9 +31,9 @@ from reward_app.service.point_service import save_point
 router = APIRouter()
 
 @router.post("/login", name="이메일 로그인")
-async def login(email: str = "hong@example.com", password: str = "user_password123", db: AsyncSession = Depends(get_async_session)):
+async def login(email: str = "hong@example.com", password: str = "user_password123@", db: AsyncSession = Depends(get_async_session)):
 # async def login(email: str =Query(title="email",description="사용자 아이디 email hong@example.com"), password: str =Query(title="password",description="비밀번호 user_password123"), db: AsyncSession = Depends(get_async_session)):
-    r = await db.execute(select(Member).where(Member.user_email==email))
+    r = await db.execute(select(Member).where(and_(Member.user_email==email, Member.user_stat=='Y')))
     member = r.scalars().first()
 
     if member is None:
@@ -182,4 +182,4 @@ async def kakao_login(
         else:
             return make_resp("E50",{"msg":message, "kakaoResultCode":resultcode})        
 
-    return make_resp("E101")   
+    return make_resp("E101")

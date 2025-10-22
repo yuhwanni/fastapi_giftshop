@@ -21,6 +21,10 @@ import json
 
 from reward_app.service.point_service import save_point
 
+from reward_app.utils.common import generate_secure_6digit_code, is_valid_phone_number, generate_unique_referral_code, is_valid_email, is_valid_password
+
+from reward_app.utils.params import AgreementYn, GenderType
+
 router = APIRouter()
 
 @router.get("/info", name="내정보")
@@ -71,121 +75,133 @@ async def list(
     return make_resp("S",{"data":member})
 
 
-@router.get("/info_update/proc", name="계정정보 변경경")
-async def last_list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
-    , current_user = Depends(get_current_user), 
-):
-    # list = await db.execute(select(Notice).where(Notice.user_email==email))
-    
-    user_seq = current_user.get('user_seq')
-    offset = (page - 1) * size   
-
-    today = datetime.now().strftime('%Y-%m-%d')
-
-    from_qry = """
-        FROM
-            PC_QUIZ q
-            LEFT JOIN PC_QUIZ_JOIN qj ON qj.quiz_seq = q.quiz_seq AND qj.user_seq=:user_seq
-        WHERE
-            q.del_yn = 'N'            
-            AND q.end_date < DATE(:today)
-    """
-
-    cnt_qry = f"""
-        SELECT count(*) cnt
-        {from_qry}
-    """
-    qry = f"""
-        SELECT q.quiz_seq, q.quiz, q.answer, q.hint, q.reward_point, IFNULL(qj.submit_answer, '') submit_answer, IFNULL(qj.is_correct, '') is_correct
-        {from_qry}
-    """
-    
-    total_results = await db.execute(text(cnt_qry), {'user_seq':user_seq, 'today': today})
-    total_count = total_results.scalar() or 0  # 전체 데이터 개수
-
-    page_info = make_page_info(total_count, page, size)    
-    qry = qry + f" ORDER BY q.quiz_seq DESC LIMIT {offset}, {size}"
-    paged_results = await db.execute(text(qry), {'user_seq':user_seq, 'today': today})
-
-    list = [dict(row) for row in paged_results.mappings()]
-
-    return make_resp("S",{"page_info": page_info, "list":list, })
-
-
-@router.get("/quiz_answer", name="퀴즈 정답 제출")
-async def quiz_answer(
-    quiz_seq: str =Query(title="퀴즈 번호",description="퀴즈 번호")
-    , answer: str =Query(title="정답",description="정답")
+@router.get("/info_update/proc", name="계정정보 변경")
+async def info_update_proc(
+    gender: GenderType =Query(default='U', title="gender",description="성별 F:여성,M:남성, U:확인불가")
+    , birth_year: str =Query(default=None, title="birth_year",description="출생년도")
+    , birth_month: str =Query(default=None, title="birth_month",description="출생월")    
+    , birth_day: str =Query(default=None, title="birth_day",description="출생일")    
+    , location: str =Query(default="", title="location",description="지역")
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
     user_seq = current_user.get('user_seq')
 
-    today = datetime.now().date()
-    # 퀴즈가 존재하고 유효기간안에 있는지 확인인
-    stmt = select(Quiz).where(and_(
-        Quiz.quiz_seq == quiz_seq,
-        Quiz.start_date <= today,
-        today <= Quiz.end_date,
-        Quiz.del_yn == 'N'
-    ))
-    
-    
-    r = await db.execute(stmt)
-    quiz = r.scalars().first()
-    
+    if gender not in ("F", "M", "U"):
+        return make_resp("E16")
 
-    if quiz is None:
+    current_year = datetime.now().year
+    max_year = current_year
+
+    if birth_year is not None and not birth_year.isdigit():
+        return make_resp("E18")
+    if birth_year is not None and len(birth_year) !=4:
+        return make_resp("E19")
+    if birth_year is not None and len(birth_year) ==4 and int(birth_year)>max_year:
+        return make_resp("E20" , {"msg":f"{max_year} 까지만 입력가능"})
+
+    if birth_month is not None and not birth_month.isdigit():
+        return make_resp("E66")        
+    if birth_month is not None and int(birth_month) not in range(1,12) :
+        return make_resp("E66")
+
+    if birth_day is not None and not birth_day.isdigit():
+        return make_resp("E67")
+    if birth_day is not None and int(birth_day) not in range(1,31) :
+        return make_resp("E67")
+
+    if birth_year is None:
+        birth_year = ""
+    if birth_month is None:
+        birth_month = ""
+    if birth_day is None:
+        birth_day = ""
+
+    user_birth= birth_year.zfill(4)+"-"+birth_month.zfill(2)+"-"+birth_day.zfill(2)       
+
+    stmt = update(Member).where(Member.user_seq==user_seq).values(
+        user_gender=gender,
+        user_birth=user_birth,
+        user_location=location,
+    )
+    # print(stmt.subquery())
+    result = await db.execute(stmt)
+    await db.commit()
+    if result:
+        return make_resp("S")
+    else:
+        return make_resp("E60")
+
+
+@router.get("/pwd_update/proc", name="비밀번호 변경")
+async def pwd_update_proc(
+    cur_pwd: str =Query(title="pwd",description="현재 비밀번호")
+    , pwd: str =Query(title="pwd",description="변경 비밀번호")
+    , re_pwd: str =Query(title="re_pwd",description="변경 비밀번호 확인")
+    , db: AsyncSession = Depends(get_async_session)
+    , current_user = Depends(get_current_user), 
+):
+    user_seq = current_user.get('user_seq')
+
+    # 기존 비밀번호 맞는지 확인
+    r = await db.execute(select(Member).where(Member.user_seq==user_seq))
+    member = r.scalars().first()
+
+    if member is None:
         return make_resp("E100")
 
-    # 기존 제출한 내역이 있는지 확인
-    stmt = select(QuizJoin).where(and_(
-        QuizJoin.quiz_seq == quiz_seq,
-        QuizJoin.user_seq == user_seq,
-    ))
+    db_hashed = member.user_pwd
 
-    r = await db.execute(stmt)
-    quiz_join = r.scalars().first() 
-    
-    if quiz_join is not None:
-        return make_resp("E40")
-        
-    is_correct = "N"
-    if answer == quiz.answer:
-        is_correct = "Y"
-    stmt = insert(QuizJoin).values(
-        quiz_seq=quiz_seq,
-        user_seq=user_seq,
-        submit_answer=answer,
-        is_correct=is_correct
+    if not bcrypt.checkpw(cur_pwd.encode('utf-8'), db_hashed.encode('utf-8')):        
+        return make_resp("E61")
+
+    if not is_valid_password(pwd):
+        return make_resp("E15")
+    if pwd != re_pwd:
+        return make_resp("E14")
+
+    # 기존 비밀번호와 같음
+    if bcrypt.checkpw(pwd.encode('utf-8'), db_hashed.encode('utf-8')):        
+        return make_resp("E63")
+
+    password_bytes = pwd.encode('utf-8')
+    # 2. 해시 생성 (salt 포함)
+    hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+
+    # 3. DB에 저장 (바이트 그대로 저장 가능, 또는 문자열로)
+    hashed_password_str = hashed_password.decode('utf-8')
+
+    stmt = update(Member).where(Member.user_seq==user_seq).values(
+        user_pwd=hashed_password_str,
+        user_pwd2=pwd
     )
-    result1 = await db.execute(stmt)
-    
-    result2 = True
-
-    if is_correct == "Y":
-        result2 = await save_point(db, user_seq, "퀴즈정답 포인트 적립", quiz.reward_point, "PC_QUIZ_JOIN", {"quiz_seq": quiz_seq, "user_seq": user_seq}, "Q")
-        # ref_info = {"table":"PC_QUIZ_JOIN", "seq": {"quiz_seq": quiz_seq, "user_seq": user_seq}}
-
-        # ref_info_json_string = json.dumps(ref_info, ensure_ascii=False, indent=4)
-
-        # stmt = insert(PointHistory).values(
-        #     user_seq = user_seq,
-        #     point_name = "포인트적립",
-        #     point = quiz.reward_point,
-        #     earn_use_type = "E",
-        #     point_type = "Q",
-        #     ref_info = ref_info_json_string,
-        # )
-        # result2 = await db.execute(stmt)
-        
-        # stmt = update(Member).where(Member.user_seq==user_seq).values(
-        #     user_point = Member.user_point+quiz.reward_point,
-        # )
-        # result3 = await db.execute(stmt)
-
-    await db.commit()     
-    if result1 and result2:
-        return make_resp("S", {"is_correct":is_correct})
+    result = await db.execute(stmt)
+    await db.commit()
+    if result:
+        return make_resp("S")
     else:
-        return make_resp("E41")
+        return make_resp("E60")
+
+@router.get("/del/proc", name="회원탈퇴")
+async def pwd_update_proc(
+    agree_yn: AgreementYn =Query(title="pwd",description="탈퇴 동의")
+    , db: AsyncSession = Depends(get_async_session)
+    , current_user = Depends(get_current_user), 
+):
+    user_seq = current_user.get('user_seq')
+
+    if agree_yn !="Y":
+        return make_resp("E64")
+    # 기존 비밀번호 맞는지 확인
+    
+
+    stmt = update(Member).where(Member.user_seq==user_seq).values(
+        user_stat='N',
+        del_date=datetime.now()
+    )
+    result = await db.execute(stmt)
+    await db.commit()
+    if result:
+        return make_resp("S")
+    else:
+        return make_resp("E65")

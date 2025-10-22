@@ -10,18 +10,16 @@ from sqlalchemy import insert
 from sqlalchemy import update
 from sqlalchemy import func
 
-from enum import Enum
+
 from reward_app.core.security import get_current_user
 
 from reward_app.models.notice_model import Notice
 from reward_app.utils.common import make_page_info
 from reward_app.core.config import make_resp
+
+from reward_app.utils.params import EarnUseType
+
 router = APIRouter()
-
-
-class EarnUseType(str, Enum):
-    EARN = "E"  # 적립
-    USE = "U"   # 사용
 
 
 @router.get("/list", name="포인트 리스트")

@@ -5,7 +5,7 @@ from reward_app.middleware.logging_middleware import (
     SelectiveLoggingMiddleware
 )
 from reward_app.utils.log_util import app_logger
-from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login, point, my
+from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login, point, my, help
 from reward_app.docs.openapi_custom import custom_openapi
 from contextlib import asynccontextmanager
 from reward_app.core.security import get_current_user
@@ -40,18 +40,38 @@ async def health():
 app.include_router(code.router, prefix="/code",tags=["코드"])
 
 app.include_router(login.router, tags=["로그인"])
-app.include_router(my.router, prefix="/my",tags=["내 정보"])
-# ✅ 라우터 등록
 app.include_router(auth.router, prefix="/auth",tags=["회원가입, 아이디/비밀번호찾기"])
-# app.include_router(signup.router, prefix="/signup", tags=["SignUp"])
-app.include_router(notice.router, prefix="/notice", tags=["공지"], dependencies=[Depends(get_current_user)])
 
+app.include_router(point.router, prefix="/point",tags=["포인트"])
+app.include_router(notice.router, prefix="/notice", tags=["공지"], dependencies=[Depends(get_current_user)])
+# 도움말
+app.include_router(help.router, prefix="/help", tags=["도움말"], dependencies=[Depends(get_current_user)])
+
+# 1대1 문의
+
+# 계정관련
+app.include_router(my.router, prefix="/my",tags=["내 정보"])
+
+# 적립
+
+# 스토어
+# 환급
+# 기프트샵
+
+# 명언
 app.include_router(quote.router, prefix="/quote",tags=["명언"], dependencies=[Depends(get_current_user)])
+# app.include_router(signup.router, prefix="/signup", tags=["SignUp"])
+# 오늘의 운세
+
+# 출석
+app.include_router(attendance.router, prefix="/attendance",tags=["출석체크"])
+# 퀴즈
 app.include_router(quiz.router, prefix="/quiz",tags=["퀴즈"], dependencies=[Depends(get_current_user)])
+# 추천인인
 app.include_router(referral.router, prefix="/referral",tags=["추천인"], dependencies=[Depends(get_current_user)])
 
-app.include_router(attendance.router, prefix="/attendance",tags=["출석체크"])
-app.include_router(point.router, prefix="/point",tags=["포인트"])
+
+
 # app.include_router(attendance.router, prefix="/attendance",tags=["출석체크"], dependencies=[Depends(get_current_user)])
 
 

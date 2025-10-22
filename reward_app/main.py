@@ -16,10 +16,11 @@ from reward_app.database.async_db import async_db
 async def lifespan(app: FastAPI):
     print('start')
 
-    await async_db._initialize()
+    await async_db._ensure_initialized()
 
     # app.openapi = lambda: custom_openapi(app)
     yield    
+    await async_db.close()
     print('end')
 
 app = FastAPI(title="Pincash Reward App API", lifespan=lifespan)

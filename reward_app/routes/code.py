@@ -34,3 +34,9 @@ router = APIRouter()
 async def list():
 # async def login(email: str =Query(title="email",description="사용자 아이디 email hong@example.com"), password: str =Query(title="password",description="비밀번호 user_password123"), db: AsyncSession = Depends(get_async_session)):
     return RESP_CODE
+
+@router.post("/error", name="강제 오류")
+async def error():
+    raise ValueError
+# async def login(email: str =Query(title="email",description="사용자 아이디 email hong@example.com"), password: str =Query(title="password",description="비밀번호 user_password123"), db: AsyncSession = Depends(get_async_session)):
+    return RESP_CODE

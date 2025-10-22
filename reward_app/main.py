@@ -1,5 +1,10 @@
 from fastapi import FastAPI, Depends
-from reward_app.middleware.logging_middleware import logging_middleware
+from reward_app.middleware.logging_middleware import (
+    LoggingMiddleware,
+    simple_logging_middleware,
+    SelectiveLoggingMiddleware
+)
+from reward_app.utils.log_util import app_logger
 from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login
 from reward_app.docs.openapi_custom import custom_openapi
 from contextlib import asynccontextmanager
@@ -20,7 +25,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Pincash Reward App API", lifespan=lifespan)
 
 # ✅ 미들웨어 등록
-app.middleware("http")(logging_middleware)
+# app.middleware("http")(simple_logging_middleware)
 
 @app.get("/health")
 async def health():

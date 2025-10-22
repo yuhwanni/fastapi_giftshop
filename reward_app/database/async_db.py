@@ -9,25 +9,10 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from dotenv import load_dotenv
 import asyncio
 
+from reward_app.utils.log_util import db_logger as logger
+
 load_dotenv()
 
-# -----------------------------
-# 로그 설정
-# -----------------------------
-today_str = datetime.now().strftime("%Y%m%d")
-log_dir = os.path.join("logs", today_str)
-os.makedirs(log_dir, exist_ok=True)
-log_file_path = os.path.join(log_dir, "database.log")
-
-logger = logging.getLogger("DatabaseLogger")
-logger.setLevel(logging.INFO)
-file_handler = RotatingFileHandler(log_file_path, maxBytes=5*1024*1024, backupCount=5, encoding="utf-8")
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-file_handler.setFormatter(formatter)
-console_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
 
 # -----------------------------
 # 환경 변수

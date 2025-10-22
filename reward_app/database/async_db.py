@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import asyncio
 
 from reward_app.utils.log_util import db_logger as logger
+import traceback
 
 load_dotenv()
 
@@ -120,6 +121,8 @@ async def get_async_session():
             yield session
         except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
             logger.error(f"DB Error: {e}")    
+            err_msg = traceback.format_exc()
+            logger.error(err_msg)    
         finally:
             await session.close()
 

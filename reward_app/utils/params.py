@@ -17,4 +17,8 @@ class OsType(str, Enum):
     A = "A" # 안드로이드
     I = "I" # IOS
     W = "W" # 웹
-    E = "E" # 기타타
+    E = "E" # 기타
+
+class DuplicateYn(str, Enum):
+    Y = "Y"  #  동의
+    N = "N"   # 미동의

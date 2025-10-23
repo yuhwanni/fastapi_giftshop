@@ -335,15 +335,16 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
         re_member = result.scalars().first()
         
         if re_member is not None:
-            result2 = await save_point(db, re_member.user_seq, "추천 포인트 적립", REFERRAL_POINT, "PC_MEMBER", {"user_seq": user_seq}, "I")
+            result3 = await save_point(db, re_member.user_seq, "추천 포인트 적립", REFERRAL_POINT, "PC_MEMBER", {"user_seq": user_seq}, "I")
 
     stmt = delete(AuthVerify).where(AuthVerify.auth_token==auth_token)
     await db.execute(stmt)
-    await db.commit()
-
+    
     if user_seq is not None:
+        await db.commit()
         return make_resp("S")
     else:
+        await db.rollback()
         return make_resp("E9")
 
 @router.post("/find_id", name="아이디 찾기")

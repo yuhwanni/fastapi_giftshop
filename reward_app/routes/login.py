@@ -91,7 +91,7 @@ async def naver_login(
         else:
             return make_resp("E50",{"msg":message, "naverResultCode":resultcode})        
 
-    return make_resp("E101")            
+    return make_resp("E1001")            
 
 @router.post("/kakao_login", name="카카오 로그인(개발중)")
 async def kakao_login(
@@ -182,4 +182,4 @@ async def kakao_login(
         else:
             return make_resp("E50",{"msg":message, "kakaoResultCode":resultcode})        
 
-    return make_resp("E101")
+    return make_resp("E1001")

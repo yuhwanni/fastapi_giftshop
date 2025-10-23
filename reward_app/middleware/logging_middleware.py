@@ -138,7 +138,7 @@ async def simple_logging_middleware(request: Request, call_next):
         return JSONResponse(
             status_code=500,
             content={
-                "code":"E102",                
+                "code":"E1002",                
                 "error": str(e),
                 "msg": err_msg,
                 "path": str(request.url),

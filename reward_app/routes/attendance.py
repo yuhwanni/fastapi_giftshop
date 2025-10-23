@@ -122,9 +122,11 @@ async def quiz_answer(
     if result1 and ATTENDANCE_POINT > 0:
         result2 = await save_point(db, user_seq, "출석 체크 적립", ATTENDANCE_POINT, "PC_ATTENDANCE", {"attendance_date": today, "user_seq": user_seq}, "T")
 
-    await db.commit()     
+         
 
     if result1 and result2:
+        await db.commit()
         return make_resp("S")
     else:
+        await db.rollback()
         return make_resp("E21")

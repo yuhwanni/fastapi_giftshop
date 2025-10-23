@@ -76,7 +76,7 @@ async def quiz_answer(
     
 
     if quote is None:
-        return make_resp("E100")
+        return make_resp("E1000")
 
     # 기존 제출한 내역이 있는지 확인
     stmt = select(QuoteLike).where(and_(

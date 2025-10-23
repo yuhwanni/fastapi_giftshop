@@ -148,7 +148,7 @@ async def pwd_update_proc(
     member = r.scalars().first()
 
     if member is None:
-        return make_resp("E100")
+        return make_resp("E1000")
 
     db_hashed = member.user_pwd
 

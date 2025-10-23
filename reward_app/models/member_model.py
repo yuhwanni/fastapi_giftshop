@@ -27,6 +27,7 @@ class Member(Base):
     user_sns_type = Column(Enum('NS', 'G', 'N', 'K'), nullable=False, server_default=text("'NS'"), comment="일반가입,구글,네이버,카카오")
     user_img = Column(String(255), nullable=True, comment="사용자 프로필 이미지")
     last_login_date = Column(DateTime, nullable=True, comment="마지막 로그인 일자")
+    os_type = Column(Enum('A','I','W','E'), nullable=False, server_default=text("'E'"), comment="A: 안드로이드, I:IOS, W:WEB, E:기타")
     push_status = Column(Enum('Y', 'N'), nullable=True, server_default=text("'N'"), comment="푸시허용")
     push_date = Column(DateTime, nullable=True, comment="푸시등록일-수정일")
     terms_yn = Column(Enum('Y','N'), nullable=False, server_default=text("'Y'"), comment="마케팅 정보 수신 동의")

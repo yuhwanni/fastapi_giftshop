@@ -26,7 +26,7 @@ import base64
 
 from reward_app.service.point_service import save_point
 
-from reward_app.utils.params import AgreementYn, GenderType
+from reward_app.utils.params import AgreementYn, GenderType, OsType
 
 
 router = APIRouter()
@@ -252,8 +252,8 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
 , marketing_yn: AgreementYn =Query(default=None, title="marketing_yn",description="마케팅 정보 수신 동의")
 , token: str =Query(default=None, title="token",description="푸쉬 토큰")
 , device_id: str =Query(default=None, title="token",description="device id")
+, os_type: OsType =Query(default='E', title="os_type",description="기기 os, A: 안드로이드, I:IOS, W:WEB, E:기타")
 , db: AsyncSession = Depends(get_async_session)):    
-
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
     r = await db.execute(stmt)
@@ -313,7 +313,8 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
         referral_code=gen_referral_code,
         user_token=token,
         marketing_yn=marketing_yn,
-        device_id=device_id
+        device_id=device_id,
+        os_type=os_type
     ).returning(Member.user_seq)
     result = await db.execute(stmt)
     user_seq = result.scalar()

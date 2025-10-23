@@ -55,7 +55,7 @@ app.include_router(notice.router, prefix="/notice", tags=["공지"], dependencie
 app.include_router(help.router, prefix="/help", tags=["도움말"], dependencies=[Depends(get_current_user)])
 
 # 1대1문의
-app.include_router(inquiry.router, prefix="/inquiry",tags=["문의(하는중)"])
+app.include_router(inquiry.router, prefix="/inquiry",tags=["문의"])
 
 # 계정관련
 app.include_router(my.router, prefix="/my",tags=["내 정보"])

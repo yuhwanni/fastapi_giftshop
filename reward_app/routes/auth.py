@@ -288,11 +288,11 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
     current_year = datetime.now().year
     max_year = current_year
 
-    if birth_year is not None and not birth_year.isdigit():
+    if birth_year is not None and birth_year != "" and not birth_year.isdigit():
         return make_resp("E18")
-    if birth_year is not None and len(birth_year) !=4:
+    if birth_year is not None and birth_year != "" and len(birth_year) !=4:
         return make_resp("E19")
-    if birth_year is not None and len(birth_year) ==4 and int(birth_year)>max_year:
+    if birth_year is not None and birth_year != "" and len(birth_year) ==4 and int(birth_year)>max_year:
         return make_resp("E20" , {"msg":f"{max_year} 까지만 입력가능"})
 
     password_bytes = pwd.encode('utf-8')
@@ -326,7 +326,7 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
     result2 = await save_point(db, user_seq, "회원가입 포인트 적립", JOIN_POINT, "PC_MEMBER", {"user_seq": user_seq}, "J")
 
     # 추천인 코드 있을 경우 포인트 지급
-    if referral_code is not None:
+    if referral_code is not None and referral_code != "":
         
         # REFERRAL_JOIN_AD_POINT = int(os.getenv("REFERRAL_JOIN_AD_POINT"))
 

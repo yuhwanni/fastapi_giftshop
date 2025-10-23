@@ -14,7 +14,7 @@ from reward_app.core.security import get_current_user
 
 router = APIRouter()
 
-@router.get("/list", name="명언리스트")
+@router.post("/list", name="명언리스트")
 async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user)):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
@@ -55,7 +55,7 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     return make_resp("S",{"page_info": page_info, "list":list, })
 
 
-@router.get("/quote_like", name="명언 좋아요/해제")
+@router.post("/quote_like", name="명언 좋아요/해제")
 async def quiz_answer(
     quote_seq: str =Query(title="명언번호",description="명언번호")
     , like_yn: str =Query(title="",description="좋아요 하기 Y 취소 N")

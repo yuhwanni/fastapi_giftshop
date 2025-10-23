@@ -23,7 +23,7 @@ from reward_app.service.point_service import save_point
 
 router = APIRouter()
 
-@router.get("/list", name="오늘 진행 중인 퀴즈")
+@router.post("/list", name="오늘 진행 중인 퀴즈")
 async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
@@ -65,7 +65,7 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     return make_resp("S",{"page_info": page_info, "list":list, })
 
 
-@router.get("/last_list", name="지난 퀴즈")
+@router.post("/last_list", name="지난 퀴즈")
 async def last_list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
@@ -106,7 +106,7 @@ async def last_list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db:
     return make_resp("S",{"page_info": page_info, "list":list, })
 
 
-@router.get("/quiz_answer", name="퀴즈 정답 제출")
+@router.post("/quiz_answer", name="퀴즈 정답 제출")
 async def quiz_answer(
     quiz_seq: str =Query(title="퀴즈 번호",description="퀴즈 번호")
     , answer: str =Query(title="정답",description="정답")

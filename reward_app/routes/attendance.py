@@ -29,8 +29,7 @@ import json
 
 router = APIRouter()
 
-
-@router.get("/list", name="출석 리스트")
+@router.post("/list", name="출석 리스트")
 async def quiz_answer(
     ym: str =Query(default=None, description="년월(Y-m) 기본값 현재 년월")
     , db: AsyncSession = Depends(get_async_session)
@@ -81,7 +80,7 @@ async def quiz_answer(
     # user_seq = current_user.get('user_seq')
 
     
-@router.get("/check", name="출석 체크하기")
+@router.post("/check", name="출석 체크하기")
 async def quiz_answer(
     ym: str =Query(default=None, description="년월(Y-m) 기본값 현재 년월")
     , db: AsyncSession = Depends(get_async_session)

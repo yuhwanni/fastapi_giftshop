@@ -17,7 +17,7 @@ from reward_app.service.point_service import save_point
 router = APIRouter()
 
 # http://15.164.103.3/ads/callback?ads_id={campaign_id}&user_seq={ptn_id}&adid={adid_or_idfa}&payout={payout}&user_cost={user_cost}&ads_name={campaign_name}
-@router.get("/callback", name="광고적립 콜백(특정 아이피만 가능)")
+@router.post("/callback", name="광고적립 콜백(특정 아이피만 가능)")
 async def callback(
     request: Request
     , ads_id: str =Query(description="광고 아이디")

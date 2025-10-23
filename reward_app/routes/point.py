@@ -22,7 +22,7 @@ from reward_app.utils.params import EarnUseType
 router = APIRouter()
 
 
-@router.get("/list", name="포인트 리스트")
+@router.post("/list", name="포인트 리스트")
 async def list(
     from_date: str =Query(title="from_date",description="검색 시작일 Y-m-d")
     , to_date: str =Query(title="to_date",description="검색 종료일 Y-m-d")
@@ -63,7 +63,7 @@ async def list(
 
     return make_resp("S",{"page_info": page_info, "list":list, })
 
-@router.get("/info", name="현재 포인트, 30일 내 소멸 예정 포인트, 총 적립 포인트")
+@router.post("/info", name="현재 포인트, 30일 내 소멸 예정 포인트, 총 적립 포인트")
 async def info(    
     db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user)

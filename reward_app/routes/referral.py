@@ -19,7 +19,7 @@ import json
 
 router = APIRouter()
 
-@router.get("/list", name="나를 추천한 친구 목록")
+@router.post("/list", name="나를 추천한 친구 목록")
 async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):

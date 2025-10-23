@@ -27,7 +27,7 @@ from reward_app.utils.params import AgreementYn, GenderType
 
 router = APIRouter()
 
-@router.get("/info", name="내정보")
+@router.post("/info", name="내정보")
 async def list(
     db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
@@ -75,7 +75,7 @@ async def list(
     return make_resp("S",{"data":member})
 
 
-@router.get("/info_update/proc", name="계정정보 변경")
+@router.post("/info_update/proc", name="계정정보 변경")
 async def info_update_proc(
     gender: GenderType =Query(default='U', title="gender",description="성별 F:여성,M:남성, U:확인불가")
     , birth_year: str =Query(default=None, title="birth_year",description="출생년도")
@@ -133,7 +133,7 @@ async def info_update_proc(
         return make_resp("E60")
 
 
-@router.get("/pwd_update/proc", name="비밀번호 변경")
+@router.post("/pwd_update/proc", name="비밀번호 변경")
 async def pwd_update_proc(
     cur_pwd: str =Query(title="pwd",description="현재 비밀번호")
     , pwd: str =Query(title="pwd",description="변경 비밀번호")
@@ -182,7 +182,7 @@ async def pwd_update_proc(
     else:
         return make_resp("E60")
 
-@router.get("/del/proc", name="회원탈퇴")
+@router.post("/del/proc", name="회원탈퇴")
 async def pwd_update_proc(
     agree_yn: AgreementYn =Query(title="pwd",description="탈퇴 동의")
     , db: AsyncSession = Depends(get_async_session)

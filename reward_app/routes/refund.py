@@ -23,7 +23,7 @@ from reward_app.service.point_service import save_point
 
 router = APIRouter()
 
-@router.get("/list", name="환급 리스트")
+@router.post("/list", name="환급 리스트")
 async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
@@ -56,7 +56,7 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     return make_resp("S", {"page_info": page_info, "list":list, })
 
 
-@router.get("/request/proc", name="환급신청")
+@router.post("/request/proc", name="환급신청")
 async def last_list(
     refund_amount: int =Query(title="신청금액",description="신청금액")
     , bank_name: str =Query(title="은행명",description="은행명")
@@ -75,6 +75,9 @@ async def last_list(
     # 남은 포인트와 신청금액 비교
     point = member.point
 
+    if point < refund_amount:
+        return make_resp("E201")
+
     stmt = insert(Refund).values(
         refund_amount=refund_amount,
         bank_name=bank_name,
@@ -84,7 +87,7 @@ async def last_list(
     result = await db.execute(stmt)
     refund_seq = result.scalar()
 
-    result2 = await save_point(db, user_seq, "환급신청청", refund_amount, "PC_REFUND", {"refund_seq": refund_seq}, "R")
+    result2 = await save_point(db, user_seq, "환급신청", refund_amount, "PC_REFUND", {"refund_seq": refund_seq}, "R")
     if refund_seq and result2:
         await db.commit()
         return make_resp("S")

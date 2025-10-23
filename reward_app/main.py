@@ -5,7 +5,7 @@ from reward_app.middleware.logging_middleware import (
     SelectiveLoggingMiddleware
 )
 from reward_app.utils.log_util import app_logger
-from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login, point, my, help, ads, inquiry, refund
+from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login, point, my, help, ads, inquiry, refund, donation
 from reward_app.docs.openapi_custom import custom_openapi
 from contextlib import asynccontextmanager
 from reward_app.core.security import get_current_user
@@ -54,14 +54,15 @@ app.include_router(notice.router, prefix="/notice", tags=["공지"], dependencie
 # 도움말, 1대1 문의
 app.include_router(help.router, prefix="/help", tags=["도움말"], dependencies=[Depends(get_current_user)])
 
+# 1대1문의
+app.include_router(inquiry.router, prefix="/inquiry",tags=["문의(하는중)"])
+
 # 계정관련
 app.include_router(my.router, prefix="/my",tags=["내 정보"])
 
-
-
 # 스토어
 # 기부
-app.include_router(inquiry.router, prefix="/inquiry",tags=["기부"])
+app.include_router(donation.router, prefix="/donation",tags=["기부"])
 
 # 환급
 app.include_router(refund.router, prefix="/refund",tags=["환급"])

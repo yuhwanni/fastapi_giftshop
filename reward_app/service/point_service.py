@@ -52,14 +52,14 @@ async def reduce_point(db: AsyncSession, user_seq:int, point_name:str, point:int
         user_seq = user_seq,
         point_name = point_name,
         point = point,
-        earn_use_type = "E",
+        earn_use_type = "U",
         point_type = point_type,
         ref_info = ref_info_json_string,
     )
     result2 = await db.execute(stmt)
     
     stmt = update(Member).where(Member.user_seq==user_seq).values(
-        user_point = Member.user_point+point,
+        user_point = Member.user_point-point,
     )
     result3 = await db.execute(stmt)
     # await db.commit()

@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from reward_app.models.member_model import Member
 
-from reward_app.models.refund_model import Refund
+from reward_app.models.donation_model import Donation
 from reward_app.utils.common import make_page_info
 from reward_app.core.config import make_resp
 from datetime import datetime
@@ -23,7 +23,7 @@ from reward_app.service.point_service import save_point, reduce_point
 
 router = APIRouter()
 
-@router.post("/list", name="환급 리스트")
+@router.post("/list", name="기부 리스트")
 async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
@@ -32,14 +32,14 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     user_seq = current_user.get('user_seq')
     offset = (page - 1) * size   
 
-    stmt = select(Refund).where(Refund.del_yn=="N")
+    stmt = select(Donation).where(Donation.del_yn=="N")
     total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
     total_count = total_results.scalar() or 0  # 전체 데이터 개수
 
     page_info = make_page_info(total_count, page, size)    
 
     paged_results = await db.execute(
-        stmt.order_by(Refund.crt_date.desc())
+        stmt.order_by(Donation.crt_date.desc())
         .offset(offset)
         .limit(size)
     )
@@ -47,7 +47,7 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     list = []
     
     for r in paged_results.all():
-        item = r.Refund.__dict__.copy()
+        item = r.Donation.__dict__.copy()
         item.pop("_sa_instance_state", None)
         list.append(item)
 
@@ -56,12 +56,9 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     return make_resp("S", {"page_info": page_info, "list":list, })
 
 
-@router.post("/request/proc", name="환급신청")
+@router.post("/request/proc", name="기부신청")
 async def last_list(
-    refund_amount: int =Query(title="신청금액",description="신청금액")
-    , bank_name: str =Query(title="은행명",description="은행명")
-    , account_number: str =Query(title="계좌번호",description="계좌번호")
-    , account_holder: str =Query(title="예금주",description="예금주")
+    donation_point: int =Query(title="신청금액",description="신청금액")
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):    
@@ -75,23 +72,20 @@ async def last_list(
     # 남은 포인트와 신청금액 비교
     point = member.user_point
 
-    if point < refund_amount:
-        return make_resp("E201")
+    if point < donation_point:
+        return make_resp("E301")
 
-    stmt = insert(Refund).values(
+    stmt = insert(Donation).values(
         user_seq=user_seq,
-        refund_amount=refund_amount,
-        bank_name=bank_name,
-        account_number=account_number,
-        account_holder=account_holder,
-    ).returning(Refund.refund_seq)
+        donation_point=donation_point,
+    ).returning(Donation.donation_seq)
     result = await db.execute(stmt)
-    refund_seq = result.scalar()
+    donation_seq = result.scalar()
 
-    result2 = await reduce_point(db, user_seq, "환급신청", refund_amount, "PC_REFUND", {"refund_seq": refund_seq}, "R")
-    if refund_seq and result2:
+    result2 = await reduce_point(db, user_seq, "기부신청", donation_point, "PC_DONATION", {"donation_seq": donation_seq}, "D")
+    if donation_seq and result2:
         await db.commit()
         return make_resp("S")
     else:
         await db.rollback()
-        return make_resp("E200")
+        return make_resp("E300")

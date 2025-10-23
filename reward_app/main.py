@@ -5,7 +5,7 @@ from reward_app.middleware.logging_middleware import (
     SelectiveLoggingMiddleware
 )
 from reward_app.utils.log_util import app_logger
-from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login, point, my, help
+from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login, point, my, help, ads
 from reward_app.docs.openapi_custom import custom_openapi
 from contextlib import asynccontextmanager
 from reward_app.core.security import get_current_user
@@ -53,6 +53,7 @@ app.include_router(help.router, prefix="/help", tags=["도움말"], dependencies
 app.include_router(my.router, prefix="/my",tags=["내 정보"])
 
 # 적립
+app.include_router(ads.router, prefix="/ads",tags=["광고"])
 
 # 스토어
 # 환급

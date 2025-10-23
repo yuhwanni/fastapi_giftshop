@@ -53,6 +53,44 @@ async def token(device_id: str =Query(title="device_id",description="기기값")
     
     return make_resp("S", {"auth_token": auth_token})
 
+@router.post("/join_check", name="이메일, 비밀번호 체크")
+async def join_check(auth_token: str =Query(title="auth_token",description="auth_token")
+, email: str =Query(title="email",description="이메일")
+, pwd: str =Query(title="pwd",description="비밀번호")
+, re_pwd: str =Query(title="re_pwd",description="비밀번호")
+, terms_yn: AgreementYn =Query(title="terms_yn",description="이용약관 동의")
+, privacy_yn: AgreementYn =Query(title="privacy_yn",description="개인정보 수집 동의")
+, db: AsyncSession = Depends(get_async_session)):    
+    stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
+
+    r = await db.execute(stmt)
+    auth_verify = r.scalars().first()
+
+    if auth_verify is None:
+        return make_resp("E2")
+    
+    if not is_valid_email(email):
+        return make_resp("E13")
+
+    if not is_valid_password(pwd):
+        return make_resp("E15")
+    if pwd != re_pwd:
+        return make_resp("E14")
+    
+    if terms_yn != "Y":
+        return make_resp("E30")
+    if privacy_yn != "Y":
+        return make_resp("E31")        
+
+    stmt = select(Member).where(Member.user_email==email)
+    total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
+    total_count = total_results.scalar() or 0
+
+    if total_count >0:
+        return make_resp("E8")
+    
+    return make_resp("S")
+
 # 문자 전송 
 @router.post("/send_sms", name="문자 보내기")
 async def send_sms(auth_token: str =Query(title="auth_token",description="auth_token"), phone: str =Query(title="phone",description="휴대폰 번호")
@@ -198,43 +236,7 @@ async def auth_sms(auth_token: str =Query(title="auth_token",description="auth_t
     else :
         return make_resp("E6")
 
-@router.post("/join_check", name="이메일, 비밀번호 체크")
-async def join_check(auth_token: str =Query(title="auth_token",description="auth_token")
-, email: str =Query(title="email",description="이메일")
-, pwd: str =Query(title="pwd",description="비밀번호")
-, re_pwd: str =Query(title="re_pwd",description="비밀번호")
-, terms_yn: AgreementYn =Query(title="terms_yn",description="이용약관 동의")
-, privacy_yn: AgreementYn =Query(title="privacy_yn",description="개인정보 수집 동의")
-, db: AsyncSession = Depends(get_async_session)):    
-    stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
-    r = await db.execute(stmt)
-    auth_verify = r.scalars().first()
-
-    if auth_verify is None:
-        return make_resp("E2")
-    
-    if not is_valid_email(email):
-        return make_resp("E13")
-
-    if not is_valid_password(pwd):
-        return make_resp("E15")
-    if pwd != re_pwd:
-        return make_resp("E14")
-    
-    if terms_yn != "Y":
-        return make_resp("E30")
-    if privacy_yn != "Y":
-        return make_resp("E31")        
-
-    stmt = select(Member).where(Member.user_email==email)
-    total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
-    total_count = total_results.scalar() or 0
-
-    if total_count >0:
-        return make_resp("E8")
-    
-    return make_resp("S")
 
 # 회원가입
 @router.post("/join", name="회원가입")

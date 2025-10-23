@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from fastapi.security import OAuth2PasswordBearer
+from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session
@@ -11,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from reward_app.models.member_model import Member
 
 from reward_app.models.inquiry_model import Inquiry, InquiryFile
-from reward_app.utils.common import make_page_info
+from reward_app.utils.common import make_page_info, resize_image
 from reward_app.core.config import make_resp
 from datetime import datetime
 
@@ -21,6 +22,10 @@ import json
 
 from reward_app.service.point_service import save_point, reduce_point
 
+import secrets
+
+import os
+from dotenv import load_dotenv
 router = APIRouter()
 
 @router.post("/list", name="문의 리스트")
@@ -57,10 +62,10 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
 
 
 @router.post("/request/proc", name="문의신청")
-async def last_list(
-    title: int =Query(title="제목",description="제목")
+async def request_proc(
+    title: str =Query(title="제목",description="제목")
     , content: str =Query(title="내용",description="내용")
-    
+    , images: List[UploadFile] = File(default=[])
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):    
@@ -71,24 +76,60 @@ async def last_list(
     member = result.scalar_one_or_none()
     if member is None:
         return make_resp("E900")
-    # 남은 포인트와 신청금액 비교
-    point = member.user_point
+    
+    load_dotenv()
+    IMAGE_FILE_SIZE = os.getenv("IMAGE_FILE_SIZE", "10")
+    IMAGE_FILE_PATH = os.getenv("IMAGE_FILE_PATH", "inquiry_file")
 
-    if point < refund_amount:
-        return make_resp("E201")
+    IMAGE_FILE_SIZE = int(IMAGE_FILE_SIZE)
+    # 첨부된 이미지가 있을 경우 체크
+    for image in images:
+        if not image.content_type.startswith("image"):
+            return make_resp("E400")
+        if len(await image.read()) > IMAGE_FILE_SIZE * 1024 * 1024:
+            return make_resp("E401", {"msg":f"{IMAGE_FILE_SIZE} 이하 파일만 첨부 가능합니다"})
 
-    stmt = insert(Refund).values(
+    stmt = insert(Inquiry).values(
         user_seq=user_seq,
-        refund_amount=refund_amount,
-        bank_name=bank_name,
-        account_number=account_number,
-        account_holder=account_holder,
-    ).returning(Refund.refund_seq)
+        title=title,
+        content=content,
+    ).returning(Inquiry.inquiry_seq)
     result = await db.execute(stmt)
-    refund_seq = result.scalar()
+    inquiry_seq = result.scalar()
 
-    result2 = await reduce_point(db, user_seq, "환급신청", refund_amount, "PC_REFUND", {"refund_seq": refund_seq}, "R")
-    if refund_seq and result2:
+    success_image_seq_arr = []
+    # 이미지들 저장
+    for image in images:
+        # 원본 이미지 파일명
+        file_name = image.filename
+        random_name = secrets.token_urlsafe(16)
+        saved_file_name = f"{random_name}.jpeg"
+        image.filename = saved_file_name
+        image = resize_image(image)
+
+        save_dir = os.path.join(IMAGE_FILE_PATH, str(inquiry_seq))
+        os.makedirs(save_dir, exist_ok=True)
+
+        save_path = os.path.join(save_dir, saved_file_name)
+    
+        image.save(save_path, "jpeg", quality=70)
+
+        stmt = insert(InquiryFile).values(
+            inquiry_seq=inquiry_seq,
+            file_name=file_name,
+            saved_file_name=saved_file_name,
+        ).returning(InquiryFile.inquiry_file_seq)
+        result = await db.execute(stmt)
+        inquiry_file_seq = result.scalar()
+        success_image_seq_arr.append(inquiry_file_seq)
+
+    result2 = True
+    if len(images)>0:
+        result2 = False
+    if len(images) == len(success_image_seq_arr):
+        result2 = True
+    
+    if inquiry_seq and result2:
         await db.commit()
         return make_resp("S")
     else:

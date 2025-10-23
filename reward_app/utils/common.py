@@ -8,6 +8,8 @@ from sqlalchemy import select
 from reward_app.models.member_model import Member
 from email_validator import validate_email, EmailNotValidError
 
+from PIL import Image, ImageOps
+from fastapi import UploadFile
 
 def make_page_info(total_count: int, page: int = 1, size: int = 20):
     """
@@ -77,3 +79,21 @@ def is_valid_password(password: str) -> bool:
     # 8~20자리, 최소 하나의 영문자, 숫자, 특수문자 포함
     pattern = r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=~`[\]\\;/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=~`[\]\\;/]{8,20}$'
     return re.match(pattern, password) is not None
+
+def resize_image(file: UploadFile, max_size: int = 1024):
+    read_image = Image.open(file.file)
+    original_width, original_height = read_image.size
+ 
+    if original_width > max_size or original_height > max_size:
+        if original_width > original_height:
+            new_width = max_size
+            new_height = int((new_width / original_width) * original_height)
+        else:
+            new_height = max_size
+            new_width = int((new_height / original_height) * original_width)
+        read_image = read_image.resize((new_width, new_height))
+ 
+    read_image = read_image.convert("RGB")
+    read_image = ImageOps.exif_transpose(read_image)
+    return read_image
+    

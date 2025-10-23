@@ -93,21 +93,21 @@ async def info_update_proc(
     current_year = datetime.now().year
     max_year = current_year
 
-    if birth_year is not None and not birth_year.isdigit():
+    if birth_year is not None and birth_year != "" and not birth_year.isdigit():
         return make_resp("E18")
-    if birth_year is not None and len(birth_year) !=4:
+    if birth_year is not None and birth_year != "" and len(birth_year) !=4:
         return make_resp("E19")
-    if birth_year is not None and len(birth_year) ==4 and int(birth_year)>max_year:
+    if birth_year is not None and birth_year != "" and len(birth_year) ==4 and int(birth_year)>max_year:
         return make_resp("E20" , {"msg":f"{max_year} 까지만 입력가능"})
 
-    if birth_month is not None and not birth_month.isdigit():
+    if birth_month is not None and birth_month != "" and not birth_month.isdigit():
         return make_resp("E66")        
-    if birth_month is not None and int(birth_month) not in range(1,12) :
+    if birth_month is not None and birth_month != "" and int(birth_month) not in range(1,12) :
         return make_resp("E66")
 
-    if birth_day is not None and not birth_day.isdigit():
+    if birth_day is not None and birth_day != "" and not birth_day.isdigit():
         return make_resp("E67")
-    if birth_day is not None and int(birth_day) not in range(1,31) :
+    if birth_day is not None and birth_day != "" and int(birth_day) not in range(1,31) :
         return make_resp("E67")
 
     if birth_year is None:

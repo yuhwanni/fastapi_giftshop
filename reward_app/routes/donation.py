@@ -32,7 +32,7 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     user_seq = current_user.get('user_seq')
     offset = (page - 1) * size   
 
-    stmt = select(Donation).where(Donation.del_yn=="N")
+    stmt = select(Donation).where(and_(Donation.del_yn=="N",Donation.user_seq==user_seq))
     total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
     total_count = total_results.scalar() or 0  # 전체 데이터 개수
 

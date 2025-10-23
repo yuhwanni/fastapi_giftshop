@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from reward_app.models.member_model import Member
 
-from reward_app.models.inquiry_model import Inquiry
+from reward_app.models.inquiry_model import Inquiry, InquiryFile
 from reward_app.utils.common import make_page_info
 from reward_app.core.config import make_resp
 from datetime import datetime
@@ -23,7 +23,7 @@ from reward_app.service.point_service import save_point, reduce_point
 
 router = APIRouter()
 
-@router.post("/list", name="기부부 리스트")
+@router.post("/list", name="문의 리스트")
 async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
@@ -32,7 +32,7 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     user_seq = current_user.get('user_seq')
     offset = (page - 1) * size   
 
-    stmt = select(Inquiry).where(Inquiry.del_yn=="N")
+    stmt = select(Inquiry).where(and_(Inquiry.del_yn=="N", Inquiry.user_seq))
     total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
     total_count = total_results.scalar() or 0  # 전체 데이터 개수
 
@@ -56,12 +56,11 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     return make_resp("S", {"page_info": page_info, "list":list, })
 
 
-@router.post("/request/proc", name="환급신청")
+@router.post("/request/proc", name="문의신청")
 async def last_list(
-    refund_amount: int =Query(title="신청금액",description="신청금액")
-    , bank_name: str =Query(title="은행명",description="은행명")
-    , account_number: str =Query(title="계좌번호",description="계좌번호")
-    , account_holder: str =Query(title="예금주",description="예금주")
+    title: int =Query(title="제목",description="제목")
+    , content: str =Query(title="내용",description="내용")
+    
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):    

@@ -5,10 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session
 import bcrypt
 
-from sqlalchemy import select
-from sqlalchemy import insert
-from sqlalchemy import update
-from sqlalchemy import func
+from sqlalchemy import select, insert, update, delete, func, between, and_, text
 
 from reward_app.models.help_model import Help
 from reward_app.utils.common import make_page_info
@@ -20,7 +17,7 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     
     offset = (page - 1) * size   
     
-    stmt = select(Help).where(Help.del_yn=="N")
+    stmt = select(Help).where(and_(Help.del_yn=="N"))
     total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
     total_count = total_results.scalar() or 0  # 전체 데이터 개수
 

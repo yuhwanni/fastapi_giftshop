@@ -35,7 +35,7 @@ router = APIRouter()
 @router.post("/login", name="이메일 로그인")
 async def login(email: str = "hong@example.com", password: str = "user_password123@", db: AsyncSession = Depends(get_async_session)):
 # async def login(email: str =Query(title="email",description="사용자 아이디 email hong@example.com"), password: str =Query(title="password",description="비밀번호 user_password123"), db: AsyncSession = Depends(get_async_session)):
-    r = await db.execute(select(Member).where(and_(Member.user_email==email, Member.user_stat=='Y')))
+    r = await db.execute(select(Member).where(and_(Member.user_email==email, Member.user_stat=='Y', Member.user_sns_type=='NS')))
     member = r.scalars().first()
 
     if member is None:
@@ -68,7 +68,7 @@ async def refresh(refresh_token: str , db: AsyncSession = Depends(get_async_sess
 
     user_seq = payload.get("user_seq")
     user_email = payload.get("sub")
-
+    
     result = await db.execute(select(Member).where(Member.user_seq==user_seq))
     member = result.scalar_one_or_none()
     if member is None:
@@ -99,6 +99,8 @@ async def refresh(refresh_token: str , db: AsyncSession = Depends(get_async_sess
 @router.post("/naver_login", name="네이버 로그인(개발중)")
 async def naver_login(
     access_token: str =Query(description="access_token")
+    , token: str =Query(default="",  description="push token")
+    , device_id: str =Query(default="", description="device_id")    
     , os_type: str = Query(description="os_type")
     , db: AsyncSession = Depends(get_async_session)):
     
@@ -117,20 +119,38 @@ async def naver_login(
         message = data.get('message')
 
         if resultcode == "00":
-            user_sns_key = data.get('response').get('id')
-            user_name = data.get('response').get('nickname')
-            # user_sns_key = data.get('response').get('name')
-            user_email = data.get('response').get('email')
-            user_gender = data.get('response').get('gender')
-            # user_sns_key = data.get('response').get('age')
-            birthday = data.get('response').get('birthday')
-            user_img = data.get('response').get('profile_image')
-            birthyear = data.get('response').get('birthyear')
-            user_phone = data.get('response').get('mobile')
+            user_sns_key = data.get('response', {}).get('id')
+            user_name = data.get('response', {}).get('nickname')
+            # user_sns_key = data.get('response', {}).get('name')
+            user_email = data.get('response', {}).get('email')
+            user_gender = data.get('response', {}).get('gender')
+            # user_sns_key = data.get('response', {}).get('age')
+            birthday = data.get('response', {}).get('birthday', '')
+            user_img = data.get('response', {}).get('profile_image')
+            birthyear = data.get('response', {}).get('birthyear', '')
+            user_phone = data.get('response', {}).get('mobile')
 
-            user_birth = birthyear+'-'+birthday
+            birth_month = ''
+            birth_day = ''
+            if birthday != '':
+                birth_month = birthday[0:2]
+                birth_day = birthday[2:2]
+            user_birth = birthyear.zfill(4)+'-'+birth_month.zfill(2)+'-'+birth_day.zfill(2)
 
-            return make_resp("S")
+            member = Member
+            member.user_sns_key = user_sns_key
+            member.user_name = user_name
+            member.user_email = user_email
+            member.user_gender = user_gender
+            member.user_img = user_img
+            member.user_phone = user_phone
+            member.user_birth = user_birth
+            member.os_type = os_type
+            member.user_sns_type = 'K'
+            member.user_token = token
+            member.device_id = device_id
+
+            return await sns_login(member, db)
         else:
             return make_resp("E50",{"msg":message, "naverResultCode":resultcode})        
 
@@ -139,6 +159,8 @@ async def naver_login(
 @router.post("/kakao_login", name="카카오 로그인(개발중)")
 async def kakao_login(
     access_token: str =Query(description="access_token")
+    , token: str =Query(default="",  description="push token")
+    , device_id: str =Query(default="", description="device_id")    
     , os_type: str = Query(description="os_type")
     , db: AsyncSession = Depends(get_async_session)):
     
@@ -191,11 +213,11 @@ async def kakao_login(
 
             # 출생 연도
             birthyear_needs_agreement = data.get('kakao_account', {}).get('birthyear_needs_agreement')  # Boolean 사용자 동의 시 출생 연도 제공 가능 필수 X
-            birthyear = data.get('kakao_account', {}).get('birthyear')  # String 출생 연도 (YYYY 형식) 필수 X
+            birthyear = data.get('kakao_account', {}).get('birthyear', '')  # String 출생 연도 (YYYY 형식) 필수 X
 
             # 생일
             birthday_needs_agreement = data.get('kakao_account', {}).get('birthday_needs_agreement')  # Boolean 사용자 동의 시 생일 제공 가능 필수 X
-            birthday = data.get('kakao_account', {}).get('birthday')  # String 생일 (MMDD 형식) 필수 X
+            birthday = data.get('kakao_account', {}).get('birthday', '')  # String 생일 (MMDD 형식) 필수 X
             birthday_type = data.get('kakao_account', {}).get('birthday_type')  # String 생일 타입 (SOLAR: 양력, LUNAR: 음력) 필수 X
             is_leap_month = data.get('kakao_account', {}).get('is_leap_month')  # Boolean 생일의 윤달 여부 필수 X
 
@@ -220,7 +242,13 @@ async def kakao_login(
             user_img = thumbnail_image_url
             birthyear = birthyear
             user_phone = phone_number
-            user_birth = birthyear.zfill(4)+'-'+birthday
+
+            birth_month = ''
+            birth_day = ''
+            if birthday != '':
+                birth_month = birthday[0:2]
+                birth_day = birthday[2:2]
+            user_birth = birthyear.zfill(4)+'-'+birth_month.zfill(2)+'-'+birth_day.zfill(2)
 
             member = Member
             member.user_sns_key = user_sns_key
@@ -232,12 +260,57 @@ async def kakao_login(
             member.user_birth = user_birth
             member.os_type = os_type
             member.user_sns_type = 'K'
+            member.user_token = token
+            member.device_id = device_id
 
-            return make_resp("S")
+            return await sns_login(member, db)
         else:
             return make_resp("E50",{"msg":message, "kakaoResultCode":resultcode})        
 
     return make_resp("E1001")
 
-    async def sns_login(member: Member):
-        print('hi')
+async def sns_login(member: Member, db: AsyncSession):
+
+    result = await db.execute(select(Member).where(and_(Member.user_sns_key==member.user_sns_key, Member.user_sns_type==member.user_sns_type)))
+    sns_member = result.scalar_one_or_none()
+    user_seq = ''
+    # 회원가입 시키고 바로 로그인 토큰 발급
+    if sns_member is None:
+        gen_referral_code = await generate_unique_referral_code(db)
+        stmt = insert(Member).values(
+            user_email=member.user_email,
+            # user_pwd=member.hashed_password_str,
+            # user_pwd2=member.pwd,
+            user_name=member.user_name,
+            user_gender=member.user_gender,
+            user_birth=member.user_birth,
+            # user_location=member.location,
+            referral_code=gen_referral_code,
+            user_token=member.user_token,
+            # marketing_yn=member.marketing_yn,
+            device_id=member.device_id,
+            os_type=member.os_type
+        ).returning(Member.user_seq)
+        result = await db.execute(stmt)
+        user_seq = result.scalar()
+
+        result = await db.execute(select(Member).where(and_(Member.user_seq==user_seq)))
+        sns_member = result.scalar_one_or_none()
+
+        load_dotenv()
+        JOIN_POINT = int(os.getenv("JOIN_POINT"))
+        
+        result2 = await save_point(db, user_seq, "회원가입 포인트 적립", JOIN_POINT, "PC_MEMBER", {"user_seq": user_seq}, "J")
+
+
+    token = await create_access_token({"sub": sns_member.user_email, "user_seq": sns_member.user_seq})
+    refresh_token = await create_refresh_token({"sub": sns_member.user_email, "user_seq": sns_member.user_seq})
+
+    upd_stmt = update(Member).where(Member.user_seq == sns_member.user_seq).values(
+        last_login_date=datetime.now(),
+        refresh_token = refresh_token
+    )
+    await db.execute(upd_stmt)
+    await db.commit() 
+    
+    return make_resp("S", {"access_token": token, "refresh_token":refresh_token})        

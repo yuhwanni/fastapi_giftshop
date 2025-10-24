@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
-from reward_app.core.security import create_access_token
+from reward_app.core.security import create_access_token, create_refresh_token, verify_token
 from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session
 import bcrypt
@@ -30,6 +30,8 @@ from reward_app.service.point_service import save_point
 
 router = APIRouter()
 
+
+
 @router.post("/login", name="이메일 로그인")
 async def login(email: str = "hong@example.com", password: str = "user_password123@", db: AsyncSession = Depends(get_async_session)):
 # async def login(email: str =Query(title="email",description="사용자 아이디 email hong@example.com"), password: str =Query(title="password",description="비밀번호 user_password123"), db: AsyncSession = Depends(get_async_session)):
@@ -41,22 +43,63 @@ async def login(email: str = "hong@example.com", password: str = "user_password1
 
     db_hashed = member.user_pwd
 
+    token = await create_access_token({"sub": member.user_email, "user_seq": member.user_seq})
+    refresh_token = await create_refresh_token({"sub": member.user_email, "user_seq": member.user_seq})
+
     if bcrypt.checkpw(password.encode('utf-8'), db_hashed.encode('utf-8')):        
         upd_stmt = update(Member).where(Member.user_email == email).values(
-            last_login_date=datetime.now()
+            last_login_date=datetime.now(),
+            refresh_token = refresh_token
         )
         await db.execute(upd_stmt)
         await db.commit() 
     else:
         return make_resp("E1")
     
-    token = await create_access_token({"sub": member.user_email, "user_seq": member.user_seq})
-    return make_resp("S", {"access_token": token})
+    
+    return make_resp("S", {"access_token": token, "refresh_token":refresh_token})
+# 토큰 갱신 엔드포인트
+@router.post("/refresh")
+async def refresh(refresh_token: str , db: AsyncSession = Depends(get_async_session)):
 
+    payload = await verify_token(refresh_token, token_type="refresh")
+    if not payload:
+        return make_resp("E500")
+
+    user_seq = payload.get("user_seq")
+    user_email = payload.get("sub")
+
+    result = await db.execute(select(Member).where(Member.user_seq==user_seq))
+    member = result.scalar_one_or_none()
+    if member is None:
+        return make_resp("E900")
+    
+    if refresh_token != member.refresh_token:
+        return make_resp("E501")
+
+    access_token = await create_access_token({"sub": user_email, "user_seq": user_seq})
+    refresh_token = await create_refresh_token({"sub": user_email, "user_seq": user_seq})
+        
+    upd_stmt = update(Member).where(Member.user_seq == user_seq).values(
+        # last_login_date=datetime.now(),
+        refresh_token = refresh_token
+    )
+    result2 = await db.execute(upd_stmt)
+    
+    if not result2:
+        return make_resp("E502")
+
+    await db.commit()         
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+    }
 
 @router.post("/naver_login", name="네이버 로그인(개발중)")
 async def naver_login(
     access_token: str =Query(description="access_token")
+    , os_type: str = Query(description="os_type")
     , db: AsyncSession = Depends(get_async_session)):
     
     url = "https://openapi.naver.com/v1/nid/me"
@@ -96,6 +139,7 @@ async def naver_login(
 @router.post("/kakao_login", name="카카오 로그인(개발중)")
 async def kakao_login(
     access_token: str =Query(description="access_token")
+    , os_type: str = Query(description="os_type")
     , db: AsyncSession = Depends(get_async_session)):
     
     url = "https://kapi.kakao.com/v2/user/me"
@@ -176,10 +220,24 @@ async def kakao_login(
             user_img = thumbnail_image_url
             birthyear = birthyear
             user_phone = phone_number
-            user_birth = birthyear+'-'+birthday
+            user_birth = birthyear.zfill(4)+'-'+birthday
+
+            member = Member
+            member.user_sns_key = user_sns_key
+            member.user_name = user_name
+            member.user_email = user_email
+            member.user_gender = user_gender
+            member.user_img = user_img
+            member.user_phone = user_phone
+            member.user_birth = user_birth
+            member.os_type = os_type
+            member.user_sns_type = 'K'
 
             return make_resp("S")
         else:
             return make_resp("E50",{"msg":message, "kakaoResultCode":resultcode})        
 
     return make_resp("E1001")
+
+    async def sns_login(member: Member):
+        print('hi')

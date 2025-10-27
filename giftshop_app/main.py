@@ -459,114 +459,114 @@ async def get_goods(page: int = Query(1, ge=1), size: int = Query(20, ge=1), bra
     return {"result":result, "msg":msg, "page_info":page_info, "list":list}
     
 
-@app.post("/send", dependencies=[Depends(verify_ext_access)], summary="쿠폰 전송 요청"
-, response_description='''
-    {
-        "result": true,
-        "msg": "",
-        "tr_id":"reward_20250911_123456"
-    }
-''')
-async def send_coupon(req: SendRequest, db: AsyncSession = Depends(get_async_session)):
-    tr_id = await generate_tr_id(db)
+# @app.post("/send", dependencies=[Depends(verify_ext_access)], summary="쿠폰 전송 요청"
+# , response_description='''
+#     {
+#         "result": true,
+#         "msg": "",
+#         "tr_id":"reward_20250911_123456"
+#     }
+# ''')
+# async def send_coupon(req: SendRequest, db: AsyncSession = Depends(get_async_session)):
+#     tr_id = await generate_tr_id(db)
 
-    result = True
-    msg = ""
+#     result = True
+#     msg = ""
     
-    # 1. DB insert (gubun='I')
-    stmt = insert(GiftishowSend).values(
-        goods_code=req.goods_code,
-        mms_msg=req.mms_msg,
-        mms_title=req.mms_title,
-        callback_no=SEND_NUMBER,
-        phone_no=req.phone_no,
-        tr_id=tr_id,
-        rev_info_yn=req.rev_info_yn,
-        rev_info_date=req.rev_info_date,
-        rev_info_time=req.rev_info_time,
-        template_id=req.template_id,
-        banner_id=req.banner_id,
-        user_id=USER_ID,
-        gubun=req.gubun,
-        crt_date=datetime.now()
-    ).returning(GiftishowSend.order_no)
-    result = await db.execute(stmt)
-    order_no = result.scalar()
-    await db.commit()
+#     # 1. DB insert (gubun='I')
+#     stmt = insert(GiftishowSend).values(
+#         goods_code=req.goods_code,
+#         mms_msg=req.mms_msg,
+#         mms_title=req.mms_title,
+#         callback_no=SEND_NUMBER,
+#         phone_no=req.phone_no,
+#         tr_id=tr_id,
+#         rev_info_yn=req.rev_info_yn,
+#         rev_info_date=req.rev_info_date,
+#         rev_info_time=req.rev_info_time,
+#         template_id=req.template_id,
+#         banner_id=req.banner_id,
+#         user_id=USER_ID,
+#         gubun=req.gubun,
+#         crt_date=datetime.now()
+#     ).returning(GiftishowSend.order_no)
+#     result = await db.execute(stmt)
+#     order_no = result.scalar()
+#     await db.commit()
     
-    req_dic = req.model_dump()
-    req_dic["tr_id"] = tr_id
+#     req_dic = req.model_dump()
+#     req_dic["tr_id"] = tr_id
 
-    # 2. 기프티쇼 발송 API 호출
-    send_data = await fetch_coupon_send(req_dic)
-    coupon_data = None
-    cancel_data = None
-    result = True
-    msg = ""
-    # 3. 결과 처리
-    if send_data.get("code") == "0000" and send_data["result"]["code"] == "0000":
-        # 쿠폰 확인 API 호출        
-        coupon_data = await fetch_coupon_info(tr_id)
-    else:
-        # 발송 실패 - 취소 처리 요청 후 쿠폰 다시 확인
-        cancel_data = await fetch_coupon_cancel(tr_id)
-        coupon_data = await fetch_coupon_info(tr_id)
-        result = False
-        msg = "쿠폰 발송이 실패하였습니다"
-    # 결과값 저장
-    if result:
-        send_result = send_data.get("result").get("result")
-        upd_stmt = update(GiftishowSend).where(GiftishowSend.order_no == order_no).values(
-            code=send_data.get("code"),
-            message=send_data.get("message"),
-            pinNo = send_result.get("pinNo") if send_result.get("pinNo") is not None else None,
-            orderNo = send_result.get("orderNo") if send_result.get("orderNo") is not None else None,
-            couponImgUrl = send_result.get("couponImgUrl") if send_result.get("couponImgUrl") is not None else None,
-            upd_date=datetime.now()
-        )
-        await db.execute(upd_stmt)
-        await db.commit()    
-    else:
-        upd_stmt = update(GiftishowSend).where(GiftishowSend.order_no == order_no).values(
-            code=send_data.get("code"),
-            message=send_data.get("message"),
-            cancel_code=cancel_data.get("code"),
-            cancel_message=cancel_data.get("message"),
-            detail_yn="Y",
-            upd_date=datetime.now()
-        )
-        await db.execute(upd_stmt)
-        await db.commit()    
+#     # 2. 기프티쇼 발송 API 호출
+#     send_data = await fetch_coupon_send(req_dic)
+#     coupon_data = None
+#     cancel_data = None
+#     result = True
+#     msg = ""
+#     # 3. 결과 처리
+#     if send_data.get("code") == "0000" and send_data["result"]["code"] == "0000":
+#         # 쿠폰 확인 API 호출        
+#         coupon_data = await fetch_coupon_info(tr_id)
+#     else:
+#         # 발송 실패 - 취소 처리 요청 후 쿠폰 다시 확인
+#         cancel_data = await fetch_coupon_cancel(tr_id)
+#         coupon_data = await fetch_coupon_info(tr_id)
+#         result = False
+#         msg = "쿠폰 발송이 실패하였습니다"
+#     # 결과값 저장
+#     if result:
+#         send_result = send_data.get("result").get("result")
+#         upd_stmt = update(GiftishowSend).where(GiftishowSend.order_no == order_no).values(
+#             code=send_data.get("code"),
+#             message=send_data.get("message"),
+#             pinNo = send_result.get("pinNo") if send_result.get("pinNo") is not None else None,
+#             orderNo = send_result.get("orderNo") if send_result.get("orderNo") is not None else None,
+#             couponImgUrl = send_result.get("couponImgUrl") if send_result.get("couponImgUrl") is not None else None,
+#             upd_date=datetime.now()
+#         )
+#         await db.execute(upd_stmt)
+#         await db.commit()    
+#     else:
+#         upd_stmt = update(GiftishowSend).where(GiftishowSend.order_no == order_no).values(
+#             code=send_data.get("code"),
+#             message=send_data.get("message"),
+#             cancel_code=cancel_data.get("code"),
+#             cancel_message=cancel_data.get("message"),
+#             detail_yn="Y",
+#             upd_date=datetime.now()
+#         )
+#         await db.execute(upd_stmt)
+#         await db.commit()    
 
-    if coupon_data is not None and coupon_data.get("code") == "0000":
-        coupon_info = coupon_data["result"][0]["couponInfoList"][0]
-        upd_stmt = update(GiftishowSend).where(GiftishowSend.order_no == order_no).values(
-            # code="0000",
-            # message="성공",
-            brandNm=coupon_info.get("brandNm"),
-            cnsmPriceAmt=coupon_info.get("cnsmPriceAmt"),
-            correcDtm=coupon_info.get("correcDtm"),
-            goodsCd=coupon_info.get("goodsCd"),
-            goodsNm=coupon_info.get("goodsNm"),
-            mmsBrandThumImg=coupon_info.get("mmsBrandThumImg"),
-            recverTelNo=coupon_info.get("recverTelNo"),
-            sellPriceAmt=coupon_info.get("sellPriceAmt"),
-            sendBasicCd=coupon_info.get("sendBasicCd"),
-            sendRstCd=coupon_info.get("sendRstCd"),
-            sendRstMsg=coupon_info.get("sendRstMsg"),
-            sendStatusCd=coupon_info.get("sendStatusCd"),
-            senderTelNo=coupon_info.get("senderTelNo"),
-            validPrdEndDt=coupon_info.get("validPrdEndDt"),    
-            pinStatusCd=coupon_info.get("pinStatusCd"),            
-            pinStatusNm=coupon_info.get("pinStatusNm"),                    
-            detail_yn="Y",
-            upd_date=datetime.now()
-        )
-        await db.execute(upd_stmt)
-        await db.commit()
-    if result is not True:
-        tr_id = ""
-    return {"result":result,"msg":msg, "tr_id":tr_id}
+#     if coupon_data is not None and coupon_data.get("code") == "0000":
+#         coupon_info = coupon_data["result"][0]["couponInfoList"][0]
+#         upd_stmt = update(GiftishowSend).where(GiftishowSend.order_no == order_no).values(
+#             # code="0000",
+#             # message="성공",
+#             brandNm=coupon_info.get("brandNm"),
+#             cnsmPriceAmt=coupon_info.get("cnsmPriceAmt"),
+#             correcDtm=coupon_info.get("correcDtm"),
+#             goodsCd=coupon_info.get("goodsCd"),
+#             goodsNm=coupon_info.get("goodsNm"),
+#             mmsBrandThumImg=coupon_info.get("mmsBrandThumImg"),
+#             recverTelNo=coupon_info.get("recverTelNo"),
+#             sellPriceAmt=coupon_info.get("sellPriceAmt"),
+#             sendBasicCd=coupon_info.get("sendBasicCd"),
+#             sendRstCd=coupon_info.get("sendRstCd"),
+#             sendRstMsg=coupon_info.get("sendRstMsg"),
+#             sendStatusCd=coupon_info.get("sendStatusCd"),
+#             senderTelNo=coupon_info.get("senderTelNo"),
+#             validPrdEndDt=coupon_info.get("validPrdEndDt"),    
+#             pinStatusCd=coupon_info.get("pinStatusCd"),            
+#             pinStatusNm=coupon_info.get("pinStatusNm"),                    
+#             detail_yn="Y",
+#             upd_date=datetime.now()
+#         )
+#         await db.execute(upd_stmt)
+#         await db.commit()
+#     if result is not True:
+#         tr_id = ""
+#     return {"result":result,"msg":msg, "tr_id":tr_id}
 
 @app.post("/info", dependencies=[Depends(verify_ext_access)], summary="쿠폰 정보 요청"
 , response_description='''
@@ -627,49 +627,49 @@ async def info_coupon(tr_id: str =Query(title="tr_id",description="쿠폰 발급
         result = True
     return {"result":result,"msg":msg, "coupon":coupon}
 # 쿠폰 취소
-@app.post("/cancel", dependencies=[Depends(verify_ext_access)], summary="쿠폰 취소 요청"
-, response_description='''
-    {
-        "result": true,
-        "msg": ""
-    }
-''')
-async def cancel_coupon(tr_id: str =Query(title="tr_id",description="쿠폰 발급시 전송된 tr_id"), db: AsyncSession = Depends(get_async_session)):
+# @app.post("/cancel", dependencies=[Depends(verify_ext_access)], summary="쿠폰 취소 요청"
+# , response_description='''
+#     {
+#         "result": true,
+#         "msg": ""
+#     }
+# ''')
+# async def cancel_coupon(tr_id: str =Query(title="tr_id",description="쿠폰 발급시 전송된 tr_id"), db: AsyncSession = Depends(get_async_session)):
     
-    cancel_data = await fetch_coupon_cancel(tr_id)
-    coupon_data = await fetch_coupon_info(tr_id)
+#     cancel_data = await fetch_coupon_cancel(tr_id)
+#     coupon_data = await fetch_coupon_info(tr_id)
 
-    result = False
-    msg = ""
+#     result = False
+#     msg = ""
 
-    if cancel_data is not None and cancel_data.get("code") == "0000":
-        result = True
-        msg = "정상처리 되었습니다"
+#     if cancel_data is not None and cancel_data.get("code") == "0000":
+#         result = True
+#         msg = "정상처리 되었습니다"
 
-        upd_stmt = update(GiftishowSend).where(GiftishowSend.tr_id == tr_id).values(
-            cancel_code=cancel_data.get("code"),
-            cancel_message=cancel_data.get("message"),
-            detail_yn="Y",
-            upd_date=datetime.now()
-        )
-        await db.execute(upd_stmt)
-        await db.commit()    
+#         upd_stmt = update(GiftishowSend).where(GiftishowSend.tr_id == tr_id).values(
+#             cancel_code=cancel_data.get("code"),
+#             cancel_message=cancel_data.get("message"),
+#             detail_yn="Y",
+#             upd_date=datetime.now()
+#         )
+#         await db.execute(upd_stmt)
+#         await db.commit()    
 
-    if coupon_data is not None and coupon_data.get("code") == "0000":
-        coupon_info = coupon_data["result"][0]["couponInfoList"][0]
-        upd_stmt = update(GiftishowSend).where(GiftishowSend.tr_id == tr_id).values(
-            # code="0000",
-            # message="성공",
-            # orderNo=coupon_info.get("sendBasicCd"),
-            pinStatusCd=coupon_info.get("pinStatusCd"),
-            pinStatusNm=coupon_info.get("pinStatusNm"),
-            detail_yn="Y",
-            upd_date=datetime.now()
-        )
-        await db.execute(upd_stmt)
-        await db.commit()
+#     if coupon_data is not None and coupon_data.get("code") == "0000":
+#         coupon_info = coupon_data["result"][0]["couponInfoList"][0]
+#         upd_stmt = update(GiftishowSend).where(GiftishowSend.tr_id == tr_id).values(
+#             # code="0000",
+#             # message="성공",
+#             # orderNo=coupon_info.get("sendBasicCd"),
+#             pinStatusCd=coupon_info.get("pinStatusCd"),
+#             pinStatusNm=coupon_info.get("pinStatusNm"),
+#             detail_yn="Y",
+#             upd_date=datetime.now()
+#         )
+#         await db.execute(upd_stmt)
+#         await db.commit()
     
-    return {"result":result,"msg":msg}
+#     return {"result":result,"msg":msg}
 
 # --- Swagger에 global header 추가 ---
 def custom_openapi():

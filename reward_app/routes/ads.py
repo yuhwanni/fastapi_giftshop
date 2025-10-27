@@ -26,7 +26,7 @@ async def callback(
     , adid: str =Query(description="adid or idfa")
     , payout: str =Query(description="매체단가")
     , user_cost: str =Query(description="유저 리워드")    
-    , unq_campaign: DuplicateYn =Query(description="중복지급 가능여부부")    
+    , unq_campaign: DuplicateYn =Query(description="중복지급 가능여부")    
     , db: AsyncSession = Depends(get_async_session)    
     ):
     host_ip = request.client.host

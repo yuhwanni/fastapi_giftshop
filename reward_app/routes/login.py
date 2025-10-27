@@ -96,7 +96,7 @@ async def refresh(refresh_token: str , db: AsyncSession = Depends(get_async_sess
         "refresh_token": refresh_token,
     }
 
-@router.post("/naver_login", name="네이버 로그인(개발중)")
+@router.post("/naver_login", name="네이버 로그인(테스트 해야함)")
 async def naver_login(
     access_token: str =Query(description="access_token")
     , token: str =Query(default="",  description="push token")
@@ -156,7 +156,7 @@ async def naver_login(
 
     return make_resp("E1001")            
 
-@router.post("/kakao_login", name="카카오 로그인(개발중)")
+@router.post("/kakao_login", name="카카오 로그인(테스트 해야함)")
 async def kakao_login(
     access_token: str =Query(description="access_token")
     , token: str =Query(default="",  description="push token")

@@ -18,19 +18,25 @@ load_dotenv()
 # -----------------------------
 # 환경 변수
 # -----------------------------
-DB_USER = os.getenv("DB_USER2")
-DB_PASS = os.getenv("DB_PASS2")
-DB_HOST = os.getenv("DB_HOST2", "localhost")
-DB_PORT = os.getenv("DB_PORT2", "3306")
-DB_NAME = os.getenv("DB_NAME2")
+GIFT_DB_USER = os.getenv("DB_USER")
+GIFT_DB_PASS = os.getenv("DB_PASS")
+GIFT_DB_HOST = os.getenv("DB_HOST", "localhost")
+GIFT_DB_PORT = os.getenv("DB_PORT", "3306")
+GIFT_DB_NAME = os.getenv("DB_NAME")
+
+REWARD_DB_USER = os.getenv("DB_USER2")
+REWARD_DB_PASS = os.getenv("DB_PASS2")
+REWARD_DB_HOST = os.getenv("DB_HOST2", "localhost")
+REWARD_DB_PORT = os.getenv("DB_PORT2", "3306")
+REWARD_DB_NAME = os.getenv("DB_NAME2")
 
 # -----------------------------
 # AsyncDatabase
 # -----------------------------
 class AsyncDatabase:
-    def __init__(self):
+    def __init__(self, db_user, db_pass, db_host, db_port, db_name):
         self.database_url = (
-            f"mysql+aiomysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+            f"mysql+aiomysql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
             f"?charset=utf8mb4"
         )
         self.engine = None
@@ -114,8 +120,8 @@ class AsyncDatabase:
 
 # FastAPI 의존성 주입용
 async def get_async_session():
-    await async_db._ensure_initialized()
-    async with async_db.async_session() as session:
+    await reward_db._ensure_initialized()
+    async with reward_db.async_session() as session:
         # yield session
         try:
             yield session
@@ -126,11 +132,25 @@ async def get_async_session():
         finally:
             await session.close()
 
+async def get_async_gift_session():
+    await gift_db._ensure_initialized()
+    async with gift_db.async_session() as session:
+        # yield session
+        try:
+            yield session
+        except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
+            logger.error(f"GIFT DB Error: {e}")    
+            err_msg = traceback.format_exc()
+            logger.error(err_msg)    
+        finally:
+            await session.close()
 
 # -----------------------------
 # 싱글톤 인스턴스
 # -----------------------------
-async_db = AsyncDatabase()
+reward_db = AsyncDatabase(REWARD_DB_USER, REWARD_DB_PASS, REWARD_DB_HOST, REWARD_DB_PORT, REWARD_DB_NAME)
+gift_db = AsyncDatabase(GIFT_DB_USER, GIFT_DB_PASS, GIFT_DB_HOST, GIFT_DB_PORT, GIFT_DB_NAME)
+
 
 def get_async_db():
-    return async_db
+    return reward_db

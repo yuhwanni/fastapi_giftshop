@@ -33,6 +33,7 @@ class Member(Base):
     terms_yn = Column(Enum('Y', 'N'), nullable=True, server_default=text("'Y'"), comment="이용약관 동의")
     privacy_yn = Column(Enum('Y', 'N'), nullable=True, server_default=text("'Y'"), comment="개인정보 수집 및 이용 동의")
     marketing_yn = Column(Enum('Y', 'N'), nullable=True, server_default=text("'Y'"), comment="마케팅 정보 수신 동의")
+    marketing_date = Column(DateTime, nullable=True, comment="마케팅 정보 수신 수정일")
     refresh_token = Column(String(500), nullable=False, server_default=text("''"), comment="refresh_token")
     crt_date = Column(DateTime, nullable=False, comment="생성일자")
     crt_id = Column(String(20), nullable=True, comment="생성자")

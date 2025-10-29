@@ -93,6 +93,7 @@ async def request_proc(
         user_seq=user_seq,
         title=title,
         content=content,
+        file_cnt=len(images)
     ).returning(Inquiry.inquiry_seq)
     result = await db.execute(stmt)
     inquiry_seq = result.scalar()

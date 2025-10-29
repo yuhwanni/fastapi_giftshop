@@ -11,6 +11,7 @@ class Inquiry(Base):
     title = Column(String(200), nullable=False, comment="제목")
     content = Column(Text, nullable=False, comment="내용")
     answer = Column(Text, nullable=True, comment="답변")
+    file_cnt = Column(Integer, nullable=False, comment="파일첨부수")
     answer_yn = Column(Enum('Y', 'N'), nullable=True, server_default=text("'N'"), comment="N: 답변대기,Y: 답변완료")
     crt_date = Column(DateTime, nullable=True, server_default=text("current_timestamp()"), comment="생성일")
     crt_id = Column(String(50), nullable=True, comment="생성자 아이디")

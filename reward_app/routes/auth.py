@@ -294,7 +294,9 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
         return make_resp("E19")
     if birth_year is not None and birth_year != "" and len(birth_year) ==4 and int(birth_year)>max_year:
         return make_resp("E20" , {"msg":f"{max_year} 까지만 입력가능"})
-
+    user_birth = "0000-00-00"
+    if birth_year is not None and birth_year != "":
+        user_birth = birth_year+"-00-00"
     password_bytes = pwd.encode('utf-8')
     # 2. 해시 생성 (salt 포함)
     hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
@@ -308,11 +310,12 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
         user_pwd2=pwd,
         user_name=nickname,
         user_gender=gender,
-        user_birth=birth_year,
+        user_birth=user_birth,
         user_location=location,
         referral_code=gen_referral_code,
         user_token=token,
         marketing_yn=marketing_yn,
+        marketing_date=datetime.now(),
         device_id=device_id,
         os_type=os_type
     ).returning(Member.user_seq)

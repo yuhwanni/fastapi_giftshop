@@ -154,7 +154,7 @@ async def naver_login(
         else:
             return make_resp("E50",{"msg":message, "naverResultCode":resultcode})        
 
-    return make_resp("E1001")            
+    # return make_resp("E1001")            
 
 @router.post("/kakao_login", name="카카오 로그인(테스트 해야함)")
 async def kakao_login(
@@ -303,12 +303,12 @@ async def sns_login(member: Member, db: AsyncSession):
         result2 = await save_point(db, user_seq, "회원가입 포인트 적립", JOIN_POINT, "PC_MEMBER", {"user_seq": user_seq}, "J")
 
 
-    token = await create_access_token({"sub": sns_member.user_email, "user_seq": sns_member.user_seq})
+    access_token = await create_access_token({"sub": sns_member.user_email, "user_seq": sns_member.user_seq})
     refresh_token = await create_refresh_token({"sub": sns_member.user_email, "user_seq": sns_member.user_seq})
 
     upd_stmt = update(Member).where(Member.user_seq == sns_member.user_seq).values(
         last_login_date=datetime.now(),
-        refresh_token = refresh_token
+        refresh_token = refresh_token.get("refresh_token")
     )
     await db.execute(upd_stmt)
     await db.commit() 

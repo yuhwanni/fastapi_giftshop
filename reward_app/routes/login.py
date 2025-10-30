@@ -33,8 +33,8 @@ router = APIRouter()
 
 
 @router.post("/login", name="이메일 로그인")
-async def login(email: str = "hong@example.com", password: str = "user_password123@", db: AsyncSession = Depends(get_async_session)):
-# async def login(email: str =Query(title="email",description="사용자 아이디 email hong@example.com"), password: str =Query(title="password",description="비밀번호 user_password123"), db: AsyncSession = Depends(get_async_session)):
+# async def login(email: str = "hong@example.com", password: str = "user_password123@", db: AsyncSession = Depends(get_async_session)):
+async def login(email: str =Query(title="email",description="사용자 아이디(이메일)"), password: str =Query(title="password",description="비밀번호"), db: AsyncSession = Depends(get_async_session)):
     r = await db.execute(select(Member).where(and_(Member.user_email==email, Member.user_stat=='Y', Member.user_sns_type=='NS')))
     member = r.scalars().first()
 

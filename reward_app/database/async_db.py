@@ -127,10 +127,10 @@ async def get_async_session():
         # yield session
         try:
             yield session
-        except HTTPException:
-            # HTTPException은 FastAPI가 처리하도록 그대로 전파
-            raise    
-        except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
+        # except HTTPException:
+        #     # HTTPException은 FastAPI가 처리하도록 그대로 전파
+        #     raise    
+        except (SQLAlchemyError, OperationalError, InterfaceError) as e:
             logger.error(f"DB Error: {e}")    
             err_msg = traceback.format_exc()
             logger.error(err_msg)    
@@ -143,10 +143,10 @@ async def get_async_gift_session():
         # yield session
         try:
             yield session
-        except HTTPException:
-            # HTTPException은 FastAPI가 처리하도록 그대로 전파
-            raise  
-        except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
+        # except HTTPException:
+        #     # HTTPException은 FastAPI가 처리하도록 그대로 전파
+        #     raise  
+        except (SQLAlchemyError, OperationalError, InterfaceError) as e:
             logger.error(f"GIFT DB Error: {e}")    
             err_msg = traceback.format_exc()
             logger.error(err_msg)    

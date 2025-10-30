@@ -26,15 +26,42 @@ import base64
 
 from reward_app.service.point_service import save_point
 
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Form
 
 
 router = APIRouter()
 
-
+class OAuth2EmailRequestForm(OAuth2PasswordRequestForm):
+    def __init__(
+        self,
+        grant_type: str = Form(None, regex="password"),
+        email: str = Form(...),
+        password: str = Form(...),
+        scope: str = Form(""),
+        client_id: str = Form(None),
+        client_secret: str = Form(None),
+    ):
+        super().__init__(
+            grant_type=grant_type,
+            username=email,  # username 필드 대신 email 사용
+            password=password,
+            scope=scope,
+            client_id=client_id,
+            client_secret=client_secret,
+        )
 
 @router.post("/login", name="이메일 로그인")
 # async def login(email: str = "hong@example.com", password: str = "user_password123@", db: AsyncSession = Depends(get_async_session)):
-async def login(email: str =Query(title="email",description="사용자 아이디(이메일)"), password: str =Query(title="password",description="비밀번호"), db: AsyncSession = Depends(get_async_session)):
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends()
+    # email: str =Query(title="email",description="사용자 아이디(이메일)")
+    # , password: str =Query(title="password",description="비밀번호")
+    , db: AsyncSession = Depends(get_async_session)):
+    
+    email = form_data.username
+    password = form_data.password
+
     r = await db.execute(select(Member).where(and_(Member.user_email==email, Member.user_stat=='Y', Member.user_sns_type=='NS')))
     member = r.scalars().first()
 

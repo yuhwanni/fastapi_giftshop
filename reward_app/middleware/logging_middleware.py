@@ -119,6 +119,7 @@ async def simple_logging_middleware(request: Request, call_next):
         status_emoji = "✅" if response.status_code < 400 else "❌"
         api_logger.info(
             f"{status_emoji} {request.method} {request.url.path} | "
+            f"param: {request.url.query}"
             f"Status: {response.status_code} | "
             f"Time: {process_time:.3f}s"
         )
@@ -129,6 +130,7 @@ async def simple_logging_middleware(request: Request, call_next):
         process_time = time.time() - start_time
         api_logger.error(
             f"❌ {request.method} {request.url.path} | "
+            f"param: {request.url.query}"
             f"Error: {str(e)} | Time: {process_time:.3f}s",
             exc_info=True
         )

@@ -1,4 +1,9 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
+
+
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import HTTPException
+
 from reward_app.middleware.logging_middleware import (
     LoggingMiddleware,
     simple_logging_middleware,
@@ -25,6 +30,18 @@ app = FastAPI(title="Pincash Reward App API", lifespan=lifespan)
 
 # ✅ 미들웨어 등록
 app.middleware("http")(simple_logging_middleware)
+
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    detail = exc.detail if isinstance(exc.detail, dict) else {"msg": str(exc.detail)}
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            # "success": False,
+            "code": detail.get("code", "UNKNOWN_ERROR"),
+            "msg": detail.get("msg", str(exc.detail)),
+        }
+    )
 
 @app.get("/health")
 async def health():

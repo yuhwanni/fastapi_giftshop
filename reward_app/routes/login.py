@@ -44,7 +44,7 @@ async def login(email: str = "hong@example.com", password: str = "user_password1
     db_hashed = member.user_pwd
 
     access_token = await create_access_token({"sub": member.user_email, "user_seq": member.user_seq})
-    refresh_token = await create_refresh_token({"sub": member.user_email, "user_seq": member.user_seq, "access_token_expire_date":"","refresh_token_expire_date":""})
+    refresh_token = await create_refresh_token({"sub": member.user_email, "user_seq": member.user_seq})
 
     if bcrypt.checkpw(password.encode('utf-8'), db_hashed.encode('utf-8')):        
         upd_stmt = update(Member).where(Member.user_email == email).values(

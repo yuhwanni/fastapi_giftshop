@@ -22,17 +22,18 @@ REFRESH_TOKEN_EXPIRE_DAYS = int(REFRESH_TOKEN_EXPIRE_DAYS)
 
 async def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPIRE_MINUTES):
     to_encode = data.copy()
-    expire = datetime.now(UTC) + timedelta(minutes=expires_delta)
+    expire = datetime.now() + timedelta(minutes=expires_delta)
     to_encode.update({"exp": expire, "type": "access"})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    access_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return {"access_token":access_token, "access_token_expire_date": expire}
 
 async def create_refresh_token(data: dict, expires_delta: int = REFRESH_TOKEN_EXPIRE_DAYS):
     to_encode = data.copy()
-    expire = datetime.now(UTC) + timedelta(days=expires_delta)
+    expire = datetime.now() + timedelta(days=expires_delta)
     to_encode.update({"exp": expire, "type": "refresh"})
     refresh_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-    return refresh_token
+    return {"refresh_token":refresh_token, "refresh_token_expire_date": expire}
 
 async def verify_token(token: str, token_type: str = "access"):
     try:
@@ -48,7 +49,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     payload = await verify_token(token, token_type="access")
     if not payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        return make_resp("E500")
+        # raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     return payload
 
 async def get_user_seq(current_user):

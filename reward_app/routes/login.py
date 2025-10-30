@@ -43,13 +43,13 @@ async def login(email: str = "hong@example.com", password: str = "user_password1
 
     db_hashed = member.user_pwd
 
-    token = await create_access_token({"sub": member.user_email, "user_seq": member.user_seq})
-    refresh_token = await create_refresh_token({"sub": member.user_email, "user_seq": member.user_seq})
+    access_token = await create_access_token({"sub": member.user_email, "user_seq": member.user_seq})
+    refresh_token = await create_refresh_token({"sub": member.user_email, "user_seq": member.user_seq, "access_token_expire_date":"","refresh_token_expire_date":""})
 
     if bcrypt.checkpw(password.encode('utf-8'), db_hashed.encode('utf-8')):        
         upd_stmt = update(Member).where(Member.user_email == email).values(
             last_login_date=datetime.now(),
-            refresh_token = refresh_token
+            refresh_token = refresh_token.get('refresh_token')
         )
         await db.execute(upd_stmt)
         await db.commit() 
@@ -57,7 +57,7 @@ async def login(email: str = "hong@example.com", password: str = "user_password1
         return make_resp("E1")
     
     
-    return make_resp("S", {"access_token": token, "refresh_token":refresh_token})
+    return make_resp("S", {} | access_token | refresh_token)
 # 토큰 갱신 엔드포인트
 @router.post("/refresh")
 async def refresh(refresh_token: str , db: AsyncSession = Depends(get_async_session)):
@@ -82,7 +82,7 @@ async def refresh(refresh_token: str , db: AsyncSession = Depends(get_async_sess
         
     upd_stmt = update(Member).where(Member.user_seq == user_seq).values(
         # last_login_date=datetime.now(),
-        refresh_token = refresh_token
+        refresh_token = refresh_token.get('refresh_token')
     )
     result2 = await db.execute(upd_stmt)
     
@@ -90,11 +90,11 @@ async def refresh(refresh_token: str , db: AsyncSession = Depends(get_async_sess
         return make_resp("E502")
 
     await db.commit()         
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-    }
+    return make_resp("S", {} | access_token | refresh_token)
+    # return {
+    #     "access_token": access_token,
+    #     "refresh_token": refresh_token,
+    # }
 
 @router.post("/naver_login", name="네이버 로그인(테스트 해야함)")
 async def naver_login(
@@ -313,4 +313,5 @@ async def sns_login(member: Member, db: AsyncSession):
     await db.execute(upd_stmt)
     await db.commit() 
     
-    return make_resp("S", {"access_token": token, "refresh_token":refresh_token})        
+    return make_resp("S", {} | access_token | refresh_token)
+    # return make_resp("S", {"access_token": token, "refresh_token":refresh_token})        

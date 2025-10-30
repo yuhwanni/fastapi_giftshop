@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from dotenv import load_dotenv
 import asyncio
 
+from fastapi import HTTPException
+
 from reward_app.utils.log_util import db_logger as logger
 import traceback
 
@@ -125,6 +127,9 @@ async def get_async_session():
         # yield session
         try:
             yield session
+        except HTTPException:
+            # HTTPException은 FastAPI가 처리하도록 그대로 전파
+            raise    
         except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
             logger.error(f"DB Error: {e}")    
             err_msg = traceback.format_exc()
@@ -138,6 +143,9 @@ async def get_async_gift_session():
         # yield session
         try:
             yield session
+        except HTTPException:
+            # HTTPException은 FastAPI가 처리하도록 그대로 전파
+            raise  
         except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
             logger.error(f"GIFT DB Error: {e}")    
             err_msg = traceback.format_exc()

@@ -33,12 +33,16 @@ app.middleware("http")(simple_logging_middleware)
 
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    print(exc)
     detail = exc.detail if isinstance(exc.detail, dict) else {"msg": str(exc.detail)}
+    code = detail.get("code", None)
+    if exc.status_code==401 and code is None:
+        code="E500"
     return JSONResponse(
         status_code=exc.status_code,
         content={
             # "success": False,
-            "code": detail.get("code", "UNKNOWN_ERROR"),
+            "code": code,
             "msg": detail.get("msg", str(exc.detail)),
         }
     )

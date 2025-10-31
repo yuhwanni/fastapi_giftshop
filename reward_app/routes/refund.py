@@ -62,7 +62,7 @@ async def list(
 
 
 @router.post("/request/proc", name="환급신청")
-async def last_list(
+async def request_proc(
     refund_amount: int =Form(title="신청금액",description="신청금액", gt=0)
     , bank_name: str =Form(title="은행명",description="은행명")
     , account_number: str =Form(title="계좌번호",description="계좌번호")

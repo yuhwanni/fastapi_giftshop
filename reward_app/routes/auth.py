@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Query, Form
+from fastapi import APIRouter, Depends, Form
 from typing import Optional
 from reward_app.core.security import create_access_token
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
+from fastapi import APIRouter, Depends, Form
 from typing import Optional
-from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session
@@ -29,7 +28,7 @@ from reward_app.utils.params import AgreementYn, GenderType
 router = APIRouter()
 
 @router.post("/info", name="내정보")
-async def list(
+async def info(
     db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
@@ -184,7 +183,7 @@ async def pwd_update_proc(
         return make_resp("E60")
 
 @router.post("/del/proc", name="회원탈퇴")
-async def pwd_update_proc(
+async def del_proc(
     agree_yn: AgreementYn =Form(title="yn",description="탈퇴 동의")
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 

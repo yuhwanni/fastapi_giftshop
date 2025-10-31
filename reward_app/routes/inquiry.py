@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from typing import Optional
-from fastapi.security import OAuth2PasswordBearer
 from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession

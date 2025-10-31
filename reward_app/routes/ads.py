@@ -10,7 +10,6 @@ from sqlalchemy import select, insert,update,func, and_
 
 from reward_app.models.ads_complete_model import AdsComplete
 from reward_app.models.member_model import Member
-from reward_app.utils.common import make_page_info
 from reward_app.core.config import make_resp
 from reward_app.utils.params import DuplicateYn
 from reward_app.service.point_service import save_point

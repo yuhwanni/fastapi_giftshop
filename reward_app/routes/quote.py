@@ -61,7 +61,7 @@ async def list(
 
 
 @router.post("/quote_like", name="명언 좋아요/해제")
-async def quiz_answer(
+async def quote_like(
     quote_seq: int =Form(title="명언번호",description="명언번호")
     , like_yn: LikeYn =Form(title="",description="좋아요 하기 Y 취소 N")
     , db: AsyncSession = Depends(get_async_session)

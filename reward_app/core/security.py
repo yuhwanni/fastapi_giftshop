@@ -29,7 +29,6 @@ async def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPI
     kst_time = expire.astimezone(KST)
     
     to_encode.update({"exp": expire, "type": "access"})
-    to_encode.update({"exp": expire, "type": "access"})
     access_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return {"access_token":access_token, "access_token_expire_date": kst_time}
 
@@ -41,9 +40,11 @@ async def create_refresh_token(data: dict, expires_delta: int = REFRESH_TOKEN_EX
     kst_time = expire.astimezone(KST)
     
     to_encode.update({"exp": expire, "type": "refresh"})
+    # to_encode.update({"type": "refresh"})
     refresh_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
     return {"refresh_token":refresh_token, "refresh_token_expire_date": kst_time}
+    # return {"refresh_token":refresh_token}
 
 async def verify_token(token: str, token_type: str = "access"):
     try:

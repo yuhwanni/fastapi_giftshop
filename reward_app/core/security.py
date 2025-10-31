@@ -29,13 +29,14 @@ async def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPI
     kst_time = expire.astimezone(KST)
     
     to_encode.update({"exp": expire, "type": "access"})
+    to_encode.update({"exp": expire, "type": "access"})
     access_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return {"access_token":access_token, "access_token_expire_date": kst_time}
 
 async def create_refresh_token(data: dict, expires_delta: int = REFRESH_TOKEN_EXPIRE_DAYS):
     to_encode = data.copy()
-    # expire = datetime.now() + timedelta(days=expires_delta)
-    expire = datetime.now(UTC) + timedelta(minutes=expires_delta)
+    expire = datetime.now() + timedelta(days=expires_delta)
+    # expire = datetime.now(UTC) + timedelta(minutes=expires_delta)
     # exp 는 utc로 응답할때는 한국 시각으로
     kst_time = expire.astimezone(KST)
     

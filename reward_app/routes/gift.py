@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,7 +45,7 @@ API_COUPON_SEND_URL = os.getenv("API_COUPON_SEND_URL", "")
 
 @router.post("/send/proc", name="쿠폰 전송요청")
 async def send_proc(    
-    goods_code: str =Query(title="상품번호",description="상품번호")   
+    goods_code: str =Form(title="상품번호",description="상품번호")   
     , db: AsyncSession = Depends(get_async_session)
     , gift_db: AsyncSession = Depends(get_async_gift_session)
     , current_user = Depends(get_current_user), 
@@ -210,7 +211,7 @@ async def send_proc(
 
 @router.post("/cancel/proc", name="쿠폰 취소요청(임시 url 삭제할 예정)")
 async def cancel_proc(    
-    tr_id: str =Query(title="tr_id",description="tr_id")       
+    tr_id: str =Form(title="tr_id",description="tr_id")       
     , gift_db: AsyncSession = Depends(get_async_gift_session)
 ):    
     cancel_data = await fetch_coupon_cancel(tr_id)

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,10 +25,11 @@ router = APIRouter()
 
 @router.post("/list", name="포인트 리스트")
 async def list(
-    from_date: str =Query(title="from_date",description="검색 시작일 Y-m-d")
-    , to_date: str =Query(title="to_date",description="검색 종료일 Y-m-d")
-    , use_type: EarnUseType = Query(title="point_type",description="E 적립, U 사용", )
-    , page: int = Query(1, ge=1), size: int = Query(20, ge=1)
+    from_date: str =Form(title="from_date",description="검색 시작일 Y-m-d")
+    , to_date: str =Form(title="to_date",description="검색 종료일 Y-m-d")
+    , use_type: EarnUseType = Form(title="point_type",description="E 적립, U 사용", )
+    , page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user)
     ):

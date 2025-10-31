@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Form
+from typing import Optional
 from reward_app.core.security import create_access_token
 from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session

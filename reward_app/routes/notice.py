@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +17,10 @@ from reward_app.core.config import make_resp
 router = APIRouter()
 
 @router.post("/list", name="공지리스트")
-async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)):
+async def list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
     result = True
 
@@ -52,7 +56,9 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     return make_resp("S", {"page_info": page_info,"top_list":top_list, "list":list, })
 
 @router.post("/detail", name="공지 상세")
-async def detail(notice_seq: int =Query(title="notice_seq",description="공지사항 notice_seq"), db: AsyncSession = Depends(get_async_session)):
+async def detail(
+    notice_seq: int =Form(title="notice_seq",description="공지사항 notice_seq")
+    , db: AsyncSession = Depends(get_async_session)):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
     result = True
     r = await db.execute(select(Notice).where(Notice.notice_seq==notice_seq))

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, Depends, Query, Form
+from typing import Optional
 from reward_app.core.security import create_access_token, create_refresh_token, verify_token
 from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session
@@ -27,7 +28,7 @@ import base64
 from reward_app.service.point_service import save_point
 
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Form
+
 
 
 router = APIRouter()
@@ -87,7 +88,9 @@ async def login(
     return make_resp("S", {} | access_token | refresh_token)
 # 토큰 갱신 엔드포인트
 @router.post("/refresh")
-async def refresh(refresh_token: str , db: AsyncSession = Depends(get_async_session)):
+async def refresh(
+    refresh_token: str = Form(description="refresh_token") 
+    , db: AsyncSession = Depends(get_async_session)):
 
     payload = await verify_token(refresh_token, token_type="refresh")
     if not payload:
@@ -125,10 +128,10 @@ async def refresh(refresh_token: str , db: AsyncSession = Depends(get_async_sess
 
 @router.post("/naver_login", name="네이버 로그인(테스트 해야함)")
 async def naver_login(
-    access_token: str =Query(description="access_token")
-    , token: str =Query(default="",  description="push token")
-    , device_id: str =Query(default="", description="device_id")    
-    , os_type: str = Query(description="os_type")
+    access_token: str =Form(description="access_token")
+    , token: Optional[str] =  Form(default="",  description="push token")
+    , device_id: str =Form(default="", description="device_id")    
+    , os_type: str = Form(description="os_type")
     , db: AsyncSession = Depends(get_async_session)):
     
     url = "https://openapi.naver.com/v1/nid/me"
@@ -185,10 +188,10 @@ async def naver_login(
 
 @router.post("/kakao_login", name="카카오 로그인(테스트 해야함)")
 async def kakao_login(
-    access_token: str =Query(description="access_token")
-    , token: str =Query(default="",  description="push token")
-    , device_id: str =Query(default="", description="device_id")    
-    , os_type: str = Query(description="os_type")
+    access_token: str =Form(description="access_token")
+    , token: str =Form(default="",  description="push token")
+    , device_id: str =Form(default="", description="device_id")    
+    , os_type: str = Form(description="os_type")
     , db: AsyncSession = Depends(get_async_session)):
     
     url = "https://kapi.kakao.com/v2/user/me"

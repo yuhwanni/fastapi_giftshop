@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, Form
+from typing import Optional
+
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +26,10 @@ from reward_app.service.point_service import save_point, reduce_point
 router = APIRouter()
 
 @router.post("/list", name="환급 리스트")
-async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
+async def list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
@@ -58,10 +63,10 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
 
 @router.post("/request/proc", name="환급신청")
 async def last_list(
-    refund_amount: int =Query(title="신청금액",description="신청금액")
-    , bank_name: str =Query(title="은행명",description="은행명")
-    , account_number: str =Query(title="계좌번호",description="계좌번호")
-    , account_holder: str =Query(title="예금주",description="예금주")
+    refund_amount: int =Form(title="신청금액",description="신청금액", gt=0)
+    , bank_name: str =Form(title="은행명",description="은행명")
+    , account_number: str =Form(title="계좌번호",description="계좌번호")
+    , account_holder: str =Form(title="예금주",description="예금주")
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):    

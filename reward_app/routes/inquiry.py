@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 from typing import List
 
@@ -29,7 +30,10 @@ from dotenv import load_dotenv
 router = APIRouter()
 
 @router.post("/list", name="문의 리스트")
-async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
+async def list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
@@ -63,8 +67,8 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
 
 @router.post("/request/proc", name="문의신청")
 async def request_proc(
-    title: str =Query(title="제목",description="제목")
-    , content: str =Query(title="내용",description="내용")
+    title: str =Form(title="제목",description="제목")
+    , content: str =Form(title="내용",description="내용")
     , images: List[UploadFile] = File(default=[])
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 

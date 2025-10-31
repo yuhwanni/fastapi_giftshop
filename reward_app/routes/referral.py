@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import APIRouter, Depends, Form
+from typing import Optional
+
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session
@@ -20,7 +21,10 @@ import json
 router = APIRouter()
 
 @router.post("/list", name="나를 추천한 친구 목록")
-async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
+async def list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))

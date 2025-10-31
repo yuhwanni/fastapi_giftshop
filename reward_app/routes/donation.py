@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +25,10 @@ from reward_app.service.point_service import save_point, reduce_point
 router = APIRouter()
 
 @router.post("/list", name="기부 리스트")
-async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
+async def list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
@@ -57,8 +61,8 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
 
 
 @router.post("/request/proc", name="기부신청")
-async def last_list(
-    donation_point: int =Query(title="신청금액",description="신청금액")
+async def request_proc(
+    donation_point: int =Form(title="신청금액",description="신청금액", gt=0)
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):    

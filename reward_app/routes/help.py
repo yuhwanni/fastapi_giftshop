@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +14,10 @@ from reward_app.core.config import make_resp
 router = APIRouter()
 
 @router.post("/list", name="도움말 리스트")
-async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)):
+async def list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)):
     
     offset = (page - 1) * size   
     
@@ -41,7 +45,9 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
     return make_resp("S", {"page_info": page_info,"list":list, })
 
 @router.post("/detail", name="도움말 상세")
-async def detail(help_seq: int =Query(title="help_seq",description="도움말말 help_seq"), db: AsyncSession = Depends(get_async_session)):
+async def detail(
+    help_seq: int =Form(title="help_seq",description="도움말말 help_seq")
+    , db: AsyncSession = Depends(get_async_session)):
     # list = await db.execute(select(Help).where(Help.user_email==email))
     result = True
     r = await db.execute(select(Help).where(Help.help_seq==help_seq))

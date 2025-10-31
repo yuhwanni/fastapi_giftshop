@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,7 +32,7 @@ router = APIRouter()
 
 @router.post("/list", name="출석 리스트")
 async def quiz_answer(
-    ym: str =Query(default=None, description="년월(Y-m) 기본값 현재 년월")
+    ym: Optional[str] =Form(default="", description="년월(Y-m) 기본값 현재 년월")
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
@@ -81,9 +82,8 @@ async def quiz_answer(
 
     
 @router.post("/check", name="출석 체크하기")
-async def quiz_answer(
-    ym: str =Query(default=None, description="년월(Y-m) 기본값 현재 년월")
-    , db: AsyncSession = Depends(get_async_session)
+async def quiz_answer(    
+    db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
     user_seq = current_user.get('user_seq')

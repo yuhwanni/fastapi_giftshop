@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +25,10 @@ from reward_app.service.point_service import save_point
 router = APIRouter()
 
 @router.post("/list", name="오늘 진행 중인 퀴즈")
-async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
+async def list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
@@ -66,7 +70,10 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
 
 
 @router.post("/last_list", name="지난 퀴즈")
-async def last_list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
+async def last_list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
@@ -108,8 +115,8 @@ async def last_list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db:
 
 @router.post("/quiz_answer", name="퀴즈 정답 제출")
 async def quiz_answer(
-    quiz_seq: str =Query(title="퀴즈 번호",description="퀴즈 번호")
-    , answer: str =Query(title="정답",description="정답")
+    quiz_seq: str =Form(title="퀴즈 번호",description="퀴즈 번호")
+    , answer: str =Form(title="정답",description="정답")
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):

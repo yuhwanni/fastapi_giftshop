@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import APIRouter, Depends, Form
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session
@@ -12,10 +12,15 @@ from reward_app.utils.common import make_page_info
 from reward_app.core.config import make_resp
 from reward_app.core.security import get_current_user
 
+from reward_app.utils.params import LikeYn
+
 router = APIRouter()
 
 @router.post("/list", name="명언리스트")
-async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: AsyncSession = Depends(get_async_session)
+async def list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user)):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
     user_seq = current_user.get('user_seq')
@@ -57,8 +62,8 @@ async def list(page: int = Query(1, ge=1), size: int = Query(20, ge=1), db: Asyn
 
 @router.post("/quote_like", name="명언 좋아요/해제")
 async def quiz_answer(
-    quote_seq: str =Query(title="명언번호",description="명언번호")
-    , like_yn: str =Query(title="",description="좋아요 하기 Y 취소 N")
+    quote_seq: int =Form(title="명언번호",description="명언번호")
+    , like_yn: LikeYn =Form(title="",description="좋아요 하기 Y 취소 N")
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -77,11 +78,11 @@ async def list(
 
 @router.post("/info_update/proc", name="계정정보 변경")
 async def info_update_proc(
-    gender: GenderType =Query(default='U', title="gender",description="성별 F:여성,M:남성, U:확인불가")
-    , birth_year: str =Query(default=None, title="birth_year",description="출생년도")
-    , birth_month: str =Query(default=None, title="birth_month",description="출생월")    
-    , birth_day: str =Query(default=None, title="birth_day",description="출생일")    
-    , location: str =Query(default="", title="location",description="지역")
+    gender: GenderType =Form(default='U', title="gender",description="성별 F:여성,M:남성, U:확인불가")
+    , birth_year: str =Form(default="", title="birth_year",description="출생년도")
+    , birth_month: str =Form(default="", title="birth_month",description="출생월")    
+    , birth_day: str =Form(default="", title="birth_day",description="출생일")    
+    , location: str =Form(default="", title="location",description="지역")
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
@@ -135,9 +136,9 @@ async def info_update_proc(
 
 @router.post("/pwd_update/proc", name="비밀번호 변경")
 async def pwd_update_proc(
-    cur_pwd: str =Query(title="pwd",description="현재 비밀번호")
-    , pwd: str =Query(title="pwd",description="변경 비밀번호")
-    , re_pwd: str =Query(title="re_pwd",description="변경 비밀번호 확인")
+    cur_pwd: str =Form(title="pwd",description="현재 비밀번호")
+    , pwd: str =Form(title="pwd",description="변경 비밀번호")
+    , re_pwd: str =Form(title="re_pwd",description="변경 비밀번호 확인")
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):
@@ -184,7 +185,7 @@ async def pwd_update_proc(
 
 @router.post("/del/proc", name="회원탈퇴")
 async def pwd_update_proc(
-    agree_yn: AgreementYn =Query(title="pwd",description="탈퇴 동의")
+    agree_yn: AgreementYn =Form(title="yn",description="탈퇴 동의")
     , db: AsyncSession = Depends(get_async_session)
     , current_user = Depends(get_current_user), 
 ):

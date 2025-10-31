@@ -22,3 +22,7 @@ class OsType(str, Enum):
 class DuplicateYn(str, Enum):
     Y = "Y"  #  동의
     N = "N"   # 미동의
+
+class LikeYn(str, Enum):
+    Y = "Y"  #  동의
+    N = "N"   # 미동의    

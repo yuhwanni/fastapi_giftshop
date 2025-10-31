@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Form
+from typing import Optional
 from reward_app.core.security import create_access_token
 from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session
@@ -33,7 +34,9 @@ router = APIRouter()
 
 # 회원가입 페이지 진입시 호출
 @router.post("/token", name="회원가입, 아이디찾기,비밀번호 찾기 전 호출하여 토큰 저장")
-async def token(device_id: str =Query(title="device_id",description="기기값"), db: AsyncSession = Depends(get_async_session)):
+async def token(
+    device_id: str =Form(title="device_id",description="기기값")
+    , db: AsyncSession = Depends(get_async_session)):
     auth_token = ""
     while True:
         auth_token = secrets.token_urlsafe(32)
@@ -54,13 +57,14 @@ async def token(device_id: str =Query(title="device_id",description="기기값")
     return make_resp("S", {"auth_token": auth_token})
 
 @router.post("/join_check", name="이메일, 비밀번호 체크")
-async def join_check(auth_token: str =Query(title="auth_token",description="auth_token")
-, email: str =Query(title="email",description="이메일")
-, pwd: str =Query(title="pwd",description="비밀번호")
-, re_pwd: str =Query(title="re_pwd",description="비밀번호")
-, terms_yn: AgreementYn =Query(title="terms_yn",description="이용약관 동의")
-, privacy_yn: AgreementYn =Query(title="privacy_yn",description="개인정보 수집 동의")
-, db: AsyncSession = Depends(get_async_session)):    
+async def join_check(
+    auth_token: str =Form(title="auth_token",description="auth_token")
+    , email: str =Form(title="email",description="이메일")
+    , pwd: str =Form(title="pwd",description="비밀번호")
+    , re_pwd: str =Form(title="re_pwd",description="비밀번호")
+    , terms_yn: AgreementYn =Form(title="terms_yn",description="이용약관 동의")
+    , privacy_yn: AgreementYn =Form(title="privacy_yn",description="개인정보 수집 동의")
+    , db: AsyncSession = Depends(get_async_session)):    
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
     r = await db.execute(stmt)
@@ -93,7 +97,9 @@ async def join_check(auth_token: str =Query(title="auth_token",description="auth
 
 # 문자 전송 
 @router.post("/send_sms", name="문자 보내기")
-async def send_sms(auth_token: str =Query(title="auth_token",description="auth_token"), phone: str =Query(title="phone",description="휴대폰 번호")
+async def send_sms(
+    auth_token: str =Form(title="auth_token" ,description="auth_token")
+    , phone: str =Form(title="phone",description="휴대폰 번호")
     , db: AsyncSession = Depends(get_async_session)):
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
@@ -205,9 +211,10 @@ async def send_sms(auth_token: str =Query(title="auth_token",description="auth_t
     
 
 @router.post("/auth_sms", name="인증번호 확인")
-async def auth_sms(auth_token: str =Query(title="auth_token",description="auth_token")
-    , verify_code: str =Query(title="verify_code",description="인증 번호")
-    , email: str =Query(default=None, title="email",description="비밀번호 변경 인증시 필수")
+async def auth_sms(
+    auth_token: str =Form(title="auth_token",description="auth_token")
+    , verify_code: str =Form(title="verify_code",description="인증 번호")
+    , email: Optional[str] =Form(default="", title="email",description="비밀번호 변경 인증시 필수")
     , db: AsyncSession = Depends(get_async_session)):
     verify_result = False
     msg = ""
@@ -240,19 +247,20 @@ async def auth_sms(auth_token: str =Query(title="auth_token",description="auth_t
 
 # 회원가입
 @router.post("/join", name="회원가입")
-async def join(auth_token: str =Query(title="auth_token",description="auth_token")
-, email: str =Query(title="email",description="이메일")
-, pwd: str =Query(title="pwd",description="비밀번호")
-, re_pwd: str =Query(title="re_pwd",description="비밀번호")
-, nickname: str =Query(title="nickname",description="닉네임")
-, gender: GenderType =Query(default="U", title="gender",description="성별 F:여성,M:남성, U:확인불가")
-, birth_year: str =Query(default=None, title="birth_year",description="출생년도")
-, location: str =Query(default=None, title="location",description="지역")
-, referral_code: str =Query(default=None, title="referral_code",description="추천인코드")
-, marketing_yn: AgreementYn =Query(default=None, title="marketing_yn",description="마케팅 정보 수신 동의")
-, token: str =Query(default=None, title="token",description="푸쉬 토큰")
-, device_id: str =Query(default=None, title="token",description="device id")
-, os_type: OsType =Query(default='E', title="os_type",description="기기 os, A: 안드로이드, I:IOS, W:WEB, E:기타")
+async def join(
+    auth_token: str =Form(title="auth_token",description="auth_token")
+, email: str =Form(title="email",description="이메일")
+, pwd: str =Form(title="pwd",description="비밀번호")
+, re_pwd: str =Form(title="re_pwd",description="비밀번호")
+, nickname: str =Form(title="nickname",description="닉네임")
+, gender: GenderType =Form(default="U", title="gender",description="성별 F:여성,M:남성, U:확인불가")
+, birth_year: Optional[int] =Form(default="", title="birth_year",description="출생년도", min_length=4, max_length=4, ge=1900, le=datetime.now().year)
+, location: Optional[str] =Form(default="", title="location",description="지역")
+, referral_code: Optional[str] =Form(default="", title="referral_code",description="추천인코드")
+, marketing_yn: Optional[AgreementYn] =Form(default="", title="marketing_yn",description="마케팅 정보 수신 동의")
+, token: Optional[str] =Form(default="", title="token",description="푸쉬 토큰")
+, device_id: Optional[str] =Form(default="", title="token",description="device id")
+, os_type: OsType =Form(default='E', title="os_type",description="기기 os, A: 안드로이드, I:IOS, W:WEB, E:기타")
 , db: AsyncSession = Depends(get_async_session)):    
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
@@ -351,7 +359,9 @@ async def join(auth_token: str =Query(title="auth_token",description="auth_token
         return make_resp("E9")
 
 @router.post("/find_id", name="아이디 찾기")
-async def find_id(auth_token: str =Query(title="auth_token",description="auth_token"), db: AsyncSession = Depends(get_async_session)):    
+async def find_id(
+    auth_token: str =Form(title="auth_token",description="auth_token")
+    , db: AsyncSession = Depends(get_async_session)):    
     join_result = False
 
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
@@ -378,8 +388,8 @@ async def find_id(auth_token: str =Query(title="auth_token",description="auth_to
 
 @router.post("/find_email", name="이메일이 존재 하는지 확인")
 async def find_email(
-    auth_token: str =Query(title="auth_token",description="auth_token")
-    , email: str =Query(title="email",description="email")    
+    auth_token: str =Form(title="auth_token",description="auth_token")
+    , email: str =Form(title="email",description="email")    
     , db: AsyncSession = Depends(get_async_session)):    
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
@@ -400,9 +410,9 @@ async def find_email(
 
 @router.post("/change_pwd", name="비밀번호 변경")
 async def change_pwd(
-    auth_token: str =Query(title="auth_token",description="auth_token")
-    , email: str =Query(title="email",description="email")
-    , pwd: str =Query(title="pwd",description="pwd")
+    auth_token: str =Form(title="auth_token",description="auth_token")
+    , email: str =Form(title="email",description="email")
+    , pwd: str =Form(title="pwd",description="pwd")
     , db: AsyncSession = Depends(get_async_session)):    
     join_result = False
 

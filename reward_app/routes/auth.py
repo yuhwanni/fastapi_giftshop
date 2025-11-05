@@ -254,7 +254,7 @@ async def join(
 , re_pwd: str =Form(title="re_pwd",description="비밀번호")
 , nickname: str =Form(title="nickname",description="닉네임")
 , gender: GenderType =Form(default="U", title="gender",description="성별 F:여성,M:남성, U:확인불가")
-, birth_year: Optional[int] =Form(default="", title="birth_year",description="출생년도", min_length=4, max_length=4, ge=1900, le=datetime.now().year)
+, birth_year: Optional[str] =Form(default="", title="birth_year",description="출생년도")
 , location: Optional[str] =Form(default="", title="location",description="지역")
 , referral_code: Optional[str] =Form(default="", title="referral_code",description="추천인코드")
 , marketing_yn: Optional[AgreementYn] =Form(default="", title="marketing_yn",description="마케팅 정보 수신 동의")

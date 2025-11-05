@@ -4,52 +4,79 @@ import os
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
+
 LOG_BASE_DIR = "rewardapp_logs"
 
 
-def get_log_dir():
-    """날짜별 로그 디렉토리 반환"""
-    today = datetime.now().strftime("%Y%m%d")
-    log_dir = os.path.join(LOG_BASE_DIR, today)
-    os.makedirs(log_dir, exist_ok=True)
-    return log_dir
+class DateCheckingHandler(logging.Handler):
+    """로그 작성 시마다 날짜를 체크하는 핸들러"""
+    
+    def __init__(self, base_dir, filename, level=logging.INFO):
+        super().__init__(level)
+        self.base_dir = base_dir
+        self.log_filename = filename
+        self.current_date = None
+        self.file_handler = None
+        self._update_handler()
+    
+    def _update_handler(self):
+        """날짜가 변경되면 핸들러 업데이트"""
+        new_date = datetime.now().strftime("%Y%m%d")
+        
+        if new_date != self.current_date:
+            # 기존 핸들러 닫기
+            if self.file_handler:
+                self.file_handler.close()
+            
+            # 새 디렉토리 생성
+            self.current_date = new_date
+            log_dir = os.path.join(self.base_dir, self.current_date)
+            os.makedirs(log_dir, exist_ok=True)
+            
+            # 새 파일 핸들러 생성
+            log_path = os.path.join(log_dir, self.log_filename)
+            self.file_handler = TimedRotatingFileHandler(
+                filename=log_path,
+                when="midnight",
+                interval=1,
+                backupCount=30,
+                encoding="utf-8",
+            )
+            self.file_handler.setFormatter(self.formatter)
+    
+    def emit(self, record):
+        """로그 레코드 작성"""
+        self._update_handler()
+        self.file_handler.emit(record)
 
 
 def setup_logger(name: str, log_filename: str = None, level=logging.INFO):
     """
-    로거 설정 함수 (중복 방지, 날짜별 디렉토리)
+    로거 설정 함수 (날짜별 디렉토리 자동 변경)
     """
     logger = logging.getLogger(name)
     
-    # 이미 핸들러가 설정되어 있으면 중복 설정 방지
     if logger.hasHandlers():
         return logger
     
     logger.setLevel(level)
-    logger.propagate = False  # 상위 로거로 전파 방지
+    logger.propagate = False
     
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
     )
     
-    # 파일 핸들러 (날짜별 디렉토리)
+    # 파일 핸들러 (날짜별 디렉토리 자동 변경)
     if log_filename is None:
         log_filename = "app.log"
     
-    log_dir = get_log_dir()
-    log_path = os.path.join(log_dir, log_filename)
-    
-    file_handler = TimedRotatingFileHandler(
-        filename=log_path,
-        when="midnight",
-        interval=1,
-        backupCount=30,  # 30일치 보관
-        encoding="utf-8",
+    file_handler = DateCheckingHandler(
+        base_dir=LOG_BASE_DIR,
+        filename=log_filename,
+        level=level
     )
-    file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
-    file_handler.suffix = "%Y%m%d"  # 파일명 suffix 형식
     
     # 콘솔 핸들러
     console_handler = logging.StreamHandler()
@@ -68,7 +95,6 @@ api_logger = setup_logger("api_logger", "api.log", level=logging.INFO)
 db_logger = setup_logger("db_logger", "db.log", level=logging.INFO)
 
 
-# 편의 함수들
 def log_info(message: str):
     app_logger.info(message)
 

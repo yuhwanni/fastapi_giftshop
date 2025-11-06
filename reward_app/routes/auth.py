@@ -316,7 +316,7 @@ async def join(
         user_email=email,
         user_pwd=hashed_password_str,
         user_pwd2=pwd,
-        user_name=nickname,
+        nickname=nickname,
         user_gender=gender,
         user_birth=user_birth,
         user_location=location,

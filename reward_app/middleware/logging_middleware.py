@@ -98,37 +98,36 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
 # 기존 함수형 미들웨어 (간단한 버전)
 async def simple_logging_middleware(request: Request, call_next):
-    """
-    간단한 로깅 미들웨어 (Body 로깅 없음)
-    """
     start_time = time.time()
-    
-    body_bytes = await request.body()
-    body_string = body_bytes.decode('utf-8')
 
-    # 요청 로깅
+    content_type = request.headers.get("content-type", "")
+    body_string = ""
+
+    if "multipart/form-data" not in content_type:
+        body_bytes = await request.body()
+        body_string = body_bytes.decode("utf-8", errors="ignore")
+    else:
+        body_string = "[multipart/form-data]"
+
     api_logger.info(
         f"→ {request.method} {request.url.path} | "
-        f"body: {body_string} | "        
+        f"body: {body_string} | "
         f"Client: {request.client.host} | "
         f"Query: {request.url.query or 'none'}"
     )
-    
-    # 처리
+
     try:
         response = await call_next(request)
         process_time = time.time() - start_time
-        
-        # 응답 로깅
+
         status_emoji = "✅" if response.status_code < 400 else "❌"
         api_logger.info(
             f"{status_emoji} {request.method} {request.url.path} | "
             f"Status: {response.status_code} | "
             f"Time: {process_time:.3f}s"
         )
-        
         return response
-        
+
     except Exception as e:
         process_time = time.time() - start_time
         api_logger.error(
@@ -136,18 +135,15 @@ async def simple_logging_middleware(request: Request, call_next):
             f"Error: {str(e)} | Time: {process_time:.3f}s",
             exc_info=True
         )
-        err_msg = traceback.format_exc()
-        api_logger.error(err_msg)  
-        
         return JSONResponse(
             status_code=500,
             content={
-                "code":"E1002",                
+                "code": "E1002",
                 "error": str(e),
-                "msg": err_msg,
                 "path": str(request.url),
             },
         )
+
 
 
 # 특정 경로 제외용 미들웨어

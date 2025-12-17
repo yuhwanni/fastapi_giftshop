@@ -107,7 +107,7 @@ async def request_proc(
         # 원본 이미지 파일명
         file_name = image.filename
         random_name = secrets.token_urlsafe(16)
-        saved_file_name = f"{random_name}.jpeg"
+        saved_file_name = f"{random_name}.jpg"
         image.filename = saved_file_name
         image = resize_image(image)
 
@@ -116,7 +116,7 @@ async def request_proc(
 
         save_path = os.path.join(save_dir, saved_file_name)
     
-        image.save(save_path, "jpeg", quality=70)
+        image.save(save_path, "jpg", quality=70)
 
         stmt = insert(InquiryFile).values(
             inquiry_seq=inquiry_seq,

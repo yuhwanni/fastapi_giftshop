@@ -22,3 +22,5 @@
 /rewardapp_logs
 /inquiry_file
 /.idea
+/reward_img/__pycache__
+/reward_img/middleware/__pycache__

@@ -1,4 +1,4 @@
-pip install fastapi uvicorn[standard] sqlalchemy aiomysql dotenv asyncio python-dotenv httpx typing-inspect apscheduler python-jose[cryptography] bcrypt email-validator python-multipart pillow
+pip install fastapi uvicorn[standard] sqlalchemy aiomysql dotenv asyncio python-dotenv httpx typing-inspect apscheduler python-jose[cryptography] bcrypt email-validator python-multipart pillow pydantic-settings
 
 aiomysql
 

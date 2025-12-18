@@ -125,15 +125,23 @@ async def refresh(
     #     "access_token": access_token,
     #     "refresh_token": refresh_token,
     # }
-
-@router.post("/naver_login", name="네이버 로그인(테스트 해야함)")
-async def naver_login(
+@router.post("/sns_login", name="sns 로그인")
+async def kakao_login(
     access_token: str =Form(description="access_token")
-    , token: Optional[str] =  Form(default="",  description="push token")
-    , device_id: str =Form(default="", description="device_id")    
-    , os_type: str = Form(description="os_type")
+    , user_sns_key: str =Form(description="user_sns_key")
+    , user_sns_type: str =Form(description="user_sns_type")
+    # access_token: str =Form(description="access_token")
+    # , token: str =Form(default="",  description="push token")
+    # , device_id: str =Form(default="", description="device_id")    
+    # , os_type: str = Form(description="os_type")
     , db: AsyncSession = Depends(get_async_session)):
-    
+    if user_sns_type=='K':
+        return await kakao_login(access_token, user_sns_key, db);
+    elif user_sns_type=='N':
+        return await naver_login(access_token, user_sns_key, db);
+    else:
+        return make_resp("E59",{})       
+async def naver_login(access_token: str,user_sns_key: str, db: AsyncSession):   
     url = "https://openapi.naver.com/v1/nid/me"
     headers = {
         # "Content-Type": "application/json; charset=utf-8",
@@ -149,7 +157,7 @@ async def naver_login(
         message = data.get('message')
 
         if resultcode == "00":
-            user_sns_key = data.get('response', {}).get('id')
+            id = data.get('response', {}).get('id')
             user_name = data.get('response', {}).get('nickname')
             # user_sns_key = data.get('response', {}).get('name')
             user_email = data.get('response', {}).get('email')
@@ -159,6 +167,9 @@ async def naver_login(
             user_img = data.get('response', {}).get('profile_image')
             birthyear = data.get('response', {}).get('birthyear', '')
             user_phone = data.get('response', {}).get('mobile')
+
+            if user_sns_key != id:
+                return make_resp("E51",{"kakaoResultCode":resultcode})        
 
             birth_month = ''
             birth_day = ''
@@ -175,10 +186,10 @@ async def naver_login(
             member.user_img = user_img
             member.user_phone = user_phone
             member.user_birth = user_birth
-            member.os_type = os_type
+            # member.os_type = os_type
             member.user_sns_type = 'K'
-            member.user_token = token
-            member.device_id = device_id
+            # member.user_token = token
+            # member.device_id = device_id
 
             return await sns_login(member, db)
         else:
@@ -186,14 +197,8 @@ async def naver_login(
 
     # return make_resp("E1001")            
 
-@router.post("/kakao_login", name="카카오 로그인(테스트 해야함)")
-async def kakao_login(
-    access_token: str =Form(description="access_token")
-    , token: str =Form(default="",  description="push token")
-    , device_id: str =Form(default="", description="device_id")    
-    , os_type: str = Form(description="os_type")
-    , db: AsyncSession = Depends(get_async_session)):
-    
+
+async def kakao_login(access_token: str,user_sns_key: str, db: AsyncSession):       
     url = "https://kapi.kakao.com/v2/user/me"
     headers = {
         "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
@@ -264,7 +269,9 @@ async def kakao_login(
             ci = data.get('kakao_account', {}).get('ci')  # String 연계정보 필수 X
             ci_authenticated_at = data.get('kakao_account', {}).get('ci_authenticated_at')  # Datetime CI 발급 시각, UTC 필수 X
 
-            user_sns_key = id           
+            if user_sns_key != id:
+                return make_resp("E53",{"kakaoResultCode":resultcode})        
+            
             user_name = nickname            
             user_email = email
             user_gender = gender
@@ -288,14 +295,14 @@ async def kakao_login(
             member.user_img = user_img
             member.user_phone = user_phone
             member.user_birth = user_birth
-            member.os_type = os_type
+            # member.os_type = os_type
             member.user_sns_type = 'K'
-            member.user_token = token
-            member.device_id = device_id
+            # member.user_token = token
+            # member.device_id = device_id
 
             return await sns_login(member, db)
         else:
-            return make_resp("E50",{"msg":message, "kakaoResultCode":resultcode})        
+            return make_resp("E52",{"msg":message, "kakaoResultCode":resultcode})        
 
     return make_resp("E1001")
 
@@ -304,11 +311,16 @@ async def sns_login(member: Member, db: AsyncSession):
     result = await db.execute(select(Member).where(and_(Member.user_sns_key==member.user_sns_key, Member.user_sns_type==member.user_sns_type)))
     sns_member = result.scalar_one_or_none()
     user_seq = ''
+
+    exist_member = True
+
     # 회원가입 시키고 바로 로그인 토큰 발급
     if sns_member is None:
+        exist_member = False
         gen_referral_code = await generate_unique_referral_code(db)
         stmt = insert(Member).values(
             user_email=member.user_email,
+            user_sns_key=member.user_sns_key,
             # user_pwd=member.hashed_password_str,
             # user_pwd2=member.pwd,
             user_name=member.user_name,
@@ -343,5 +355,5 @@ async def sns_login(member: Member, db: AsyncSession):
     await db.execute(upd_stmt)
     await db.commit() 
     
-    return make_resp("S", {} | access_token | refresh_token)
+    return make_resp("S", {exist_member:exist_member} | access_token | refresh_token)
     # return make_resp("S", {"access_token": token, "refresh_token":refresh_token})        

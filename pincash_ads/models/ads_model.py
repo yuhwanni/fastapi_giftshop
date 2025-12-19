@@ -15,3 +15,5 @@ class Ads(Base):
     show_yn = Column(Enum('Y', 'N'), nullable=True, server_default=text("'Y'"), comment="노출상태")
     crt_date = Column(DateTime, nullable=True, server_default=text("current_timestamp()"), comment="등록일")
     upd_date = Column(DateTime, nullable=True, server_default=text("current_timestamp()"), onupdate=text("current_timestamp()"), comment="수정일")
+    campaign_type = Column(String(2), nullable=True, comment="캠페인 타입코드")
+    

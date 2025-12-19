@@ -19,7 +19,8 @@ def map_api_to_ads(item: dict) -> Ads:
         campaign_title=item.get("campaign_title",""),
         campaign_feed_img=item.get("campaign_feed_img",""),
         campaign_reward_price=item.get("campaign_reward_price",0),
-        campaign_os_type=item.get("campaign_os_type", "ALL")        
+        campaign_os_type=item.get("campaign_os_type", "ALL"),
+        campaign_type=item.get("campaign_type", "")
     )
 
 async def _get_ads(page:int, os_type:str, list: list | None = None):
@@ -54,22 +55,25 @@ async def get_ads(session: Session):
 
     ads_objects = [map_api_to_ads(item) for item in list]
 
-    for ads in ads_objects:        
-        stmt = insert(Ads).values(
-            campaign_id=ads.campaign_id,
-            campaign_name=ads.campaign_name,
-            campaign_title=ads.campaign_title,
-            campaign_feed_img=ads.campaign_feed_img,
-            campaign_reward_price=ads.campaign_reward_price,
-            campaign_os_type=ads.campaign_os_type            
-        ).on_duplicate_key_update(
-            campaign_name=ads.campaign_name,
-            campaign_title=ads.campaign_title,
-            campaign_feed_img=ads.campaign_feed_img,
-            campaign_reward_price=ads.campaign_reward_price,
-            campaign_os_type=ads.campaign_os_type
-        )
-        await session.execute(stmt)
+    for ads in ads_objects:       
+        if str(ads.campaign_type)=="8":
+            stmt = insert(Ads).values(
+                campaign_id=ads.campaign_id,
+                campaign_name=ads.campaign_name,
+                campaign_title=ads.campaign_title,
+                campaign_feed_img=ads.campaign_feed_img,
+                campaign_reward_price=ads.campaign_reward_price,
+                campaign_os_type=ads.campaign_os_type,        
+                campaign_type=ads.campaign_type    
+            ).on_duplicate_key_update(
+                campaign_name=ads.campaign_name,
+                campaign_title=ads.campaign_title,
+                campaign_feed_img=ads.campaign_feed_img,
+                campaign_reward_price=ads.campaign_reward_price,
+                campaign_os_type=ads.campaign_os_type,
+                campaign_type=ads.campaign_type        
+            )
+            await session.execute(stmt)
         
 
     await session.commit()

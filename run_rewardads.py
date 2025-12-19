@@ -1,6 +1,7 @@
 # main.py
 import asyncio
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from pincash_ads.database.async_db import reward_db
 from pincash_ads.models.ads_model import Ads
@@ -34,23 +35,36 @@ async def _get_ads(page:int, os_type:str, list: list | None = None):
             await _get_ads(page, os_type)
 
         
-async def get_ads():
+async def get_ads(session: Session):
     # 안드로이드, IOS 별로 한번씩 불러오기
     list = []
     await _get_ads(1, 'A', list)
     await _get_ads(1, 'I', list)
     
-    for ads in list:
-        campaign_id = ads.get("campaign_id", 0)
-        campaign_name = ads.get("campaign_name", "")
-        campaign_title = ads.get("campaign_title", "")
-        campaign_feed_img = ads.get("campaign_feed_img", "")
-        campaign_reward_price = ads.get("campaign_reward_price", 0)
-        campaign_os_type = ads.get("campaigcampaign_os_typen_id", "")
-        campaign_type = ads.get("campaign_type", 0)
+    for data in list:
+        campaign_id = data.get("campaign_id", 0)
+        campaign_name = data.get("campaign_name", "")
+        campaign_title = data.get("campaign_title", "")
+        campaign_feed_img = data.get("campaign_feed_img", "")
+        campaign_reward_price = data.get("campaign_reward_price", 0)
+        campaign_os_type = data.get("campaigcampaign_os_typen_id", "")
+        campaign_type = data.get("campaign_type", 0)
 
         if(campaign_type==8):
             print(campaign_id)
+
+            ads = session.query(Ads).filter(Ads.campaign_id == campaign_id).first()
+    
+            if ads:
+                # UPDATE
+                for key, value in data.items():
+                    setattr(ads, key, value)
+            else:
+                # INSERT
+                ads = Ads(campaign_id=campaign_id, **data)
+                session.add(ads)
+            
+            session.commit()
 
 
 async def main():
@@ -58,7 +72,7 @@ async def main():
     async with reward_db.async_session() as session:
         # yield session
         try:
-            await get_ads()            
+            await get_ads(session)            
         # except HTTPException:
         #     # HTTPException은 FastAPI가 처리하도록 그대로 전파
         #     raise    

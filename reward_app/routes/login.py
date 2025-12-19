@@ -158,8 +158,8 @@ async def naver_login(access_token: str,user_sns_key: str, db: AsyncSession):
 
         if resultcode == "00":
             id = data.get('response', {}).get('id')
-            user_name = data.get('response', {}).get('nickname')
-            # user_sns_key = data.get('response', {}).get('name')
+            nickname = data.get('response', {}).get('nickname')
+            user_name = data.get('response', {}).get('name')
             user_email = data.get('response', {}).get('email')
             user_gender = data.get('response', {}).get('gender')
             # user_sns_key = data.get('response', {}).get('age')
@@ -175,14 +175,15 @@ async def naver_login(access_token: str,user_sns_key: str, db: AsyncSession):
             birth_day = ''
             if birthday != '':
                 birth_month = birthday[0:2]
-                birth_day = birthday[2:2]
+                birth_day = birthday[2:4]
             user_birth = birthyear.zfill(4)+'-'+birth_month.zfill(2)+'-'+birth_day.zfill(2)
 
             member = Member
             member.user_sns_key = user_sns_key
             member.user_name = user_name
+            member.nickname = nickname
             member.user_email = user_email
-            member.user_gender = user_gender
+            member.user_gender = user_gender.upper()
             member.user_img = user_img
             member.user_phone = user_phone
             member.user_birth = user_birth
@@ -273,8 +274,14 @@ async def kakao_login(access_token: str,user_sns_key: str, db: AsyncSession):
                 return make_resp("E53",{"kakaoResultCode":resultcode})        
             
             user_name = nickname            
+            
             user_email = email
-            user_gender = gender
+            user_gender = 'U'
+            if gender=='female':
+                user_gender='F'
+            elif gender=='male':
+                user_gender = 'M'
+
             birthday = birthday
             user_img = thumbnail_image_url
             birthyear = birthyear
@@ -284,12 +291,13 @@ async def kakao_login(access_token: str,user_sns_key: str, db: AsyncSession):
             birth_day = ''
             if birthday != '':
                 birth_month = birthday[0:2]
-                birth_day = birthday[2:2]
+                birth_day = birthday[3:5]
             user_birth = birthyear.zfill(4)+'-'+birth_month.zfill(2)+'-'+birth_day.zfill(2)
 
             member = Member
             member.user_sns_key = user_sns_key
             member.user_name = user_name
+            member.nickname = nickname
             member.user_email = user_email
             member.user_gender = user_gender
             member.user_img = user_img
@@ -324,6 +332,7 @@ async def sns_login(member: Member, db: AsyncSession):
             # user_pwd=member.hashed_password_str,
             # user_pwd2=member.pwd,
             user_name=member.user_name,
+            nickname=member.nickname,
             user_gender=member.user_gender,
             user_birth=member.user_birth,
             # user_location=member.location,

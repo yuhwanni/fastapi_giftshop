@@ -126,7 +126,7 @@ async def refresh(
     #     "refresh_token": refresh_token,
     # }
 @router.post("/sns_login", name="sns 로그인")
-async def kakao_login(
+async def sns_login(
     access_token: str =Form(description="access_token")
     , user_sns_key: str =Form(description="user_sns_key")
     , user_sns_type: str =Form(description="user_sns_type")
@@ -169,6 +169,7 @@ async def naver_login(access_token: str,user_sns_key: str, db: AsyncSession):
             user_phone = data.get('response', {}).get('mobile')
 
             if user_sns_key != id:
+                print(f"user_sns_key:{user_sns_key}, id:{id}")
                 return make_resp("E51",{"kakaoResultCode":resultcode})        
 
             birth_month = ''
@@ -271,6 +272,7 @@ async def kakao_login(access_token: str,user_sns_key: str, db: AsyncSession):
             ci_authenticated_at = data.get('kakao_account', {}).get('ci_authenticated_at')  # Datetime CI 발급 시각, UTC 필수 X
 
             if user_sns_key != id:
+                print(f"user_sns_key:{user_sns_key}, id:{id}")
                 return make_resp("E53",{"kakaoResultCode":resultcode})        
             
             user_name = nickname            

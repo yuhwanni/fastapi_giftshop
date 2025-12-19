@@ -261,6 +261,8 @@ async def join(
     , token: Optional[str] =Form(default="", title="token",description="푸쉬 토큰")
     , device_id: Optional[str] =Form(default="", title="token",description="device id")
     , os_type: OsType =Form(default='E', title="os_type",description="기기 os, A: 안드로이드, I:IOS, W:WEB, E:기타")
+    , user_sns_key: str =Form(default='', description="user_sns_key")
+    , user_sns_type: str =Form(default='', description="user_sns_type")
     , db: AsyncSession = Depends(get_async_session)):    
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
@@ -325,7 +327,9 @@ async def join(
         marketing_yn=marketing_yn,
         marketing_date=datetime.now(),
         device_id=device_id,
-        os_type=os_type
+        os_type=os_type,
+        user_sns_key=user_sns_key,
+        user_sns_type=user_sns_type
     ).returning(Member.user_seq)
     result = await db.execute(stmt)
     user_seq = result.scalar()

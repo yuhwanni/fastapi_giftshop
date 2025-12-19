@@ -346,15 +346,12 @@ async def sns_login(member: Member, db: AsyncSession):
     result = await db.execute(select(Member).where(Member.user_sns_key==member.user_sns_key, Member.user_sns_type==member.user_sns_type))
     
     sns_member = result.scalars().first()
-    
-    user_seq = ''
 
     exist_member = True
 
     # 회원가입 시키고 바로 로그인 토큰 발급
     if sns_member is None:
         exist_member = False
-        print('sns_member none')
         # exist_member = False
         # gen_referral_code = await generate_unique_referral_code(db)
         # stmt = insert(Member).values(

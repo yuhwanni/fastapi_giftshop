@@ -52,8 +52,6 @@ async def get_ads(session: Session):
     await _get_ads(1, 'A', list)
     await _get_ads(1, 'I', list)
 
-    ads_logger.info(f"광고 {len(list)}건")
-
     ads_objects = [map_api_to_ads(item) for item in list]
 
     for ads in ads_objects:        

@@ -42,12 +42,20 @@ class DateCheckingHandler(logging.Handler):
                 backupCount=30,
                 encoding="utf-8",
             )
-            self.file_handler.setFormatter(self.formatter)
+            # formatter가 이미 설정되어 있다면 적용
+            if self.formatter:
+                self.file_handler.setFormatter(self.formatter)
     
     def emit(self, record):
         """로그 레코드 작성"""
         self._update_handler()
         self.file_handler.emit(record)
+    
+    def setFormatter(self, fmt):
+        """Formatter 설정 (부모 클래스 메서드 오버라이드)"""
+        super().setFormatter(fmt)
+        if self.file_handler:
+            self.file_handler.setFormatter(fmt)
 
 
 def setup_logger(name: str, log_filename: str = None, level=logging.INFO):
@@ -56,8 +64,8 @@ def setup_logger(name: str, log_filename: str = None, level=logging.INFO):
     """
     logger = logging.getLogger(name)
     
-    if logger.hasHandlers():
-        return logger
+    # 기존 핸들러 모두 제거 (중요!)
+    logger.handlers.clear()
     
     logger.setLevel(level)
     logger.propagate = False

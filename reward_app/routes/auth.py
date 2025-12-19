@@ -266,6 +266,11 @@ async def join(
     , db: AsyncSession = Depends(get_async_session)):    
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
+    sns_join = False
+    if user_sns_key!="" and user_sns_type!="":
+        sns_join = True
+    
+
     r = await db.execute(stmt)
     auth_verify = r.scalars().first()
 
@@ -277,9 +282,9 @@ async def join(
     if not is_valid_email(email):
         return make_resp("E13")
 
-    if not is_valid_password(pwd):
+    if not sns_join and not is_valid_password(pwd):
         return make_resp("E15")
-    if pwd != re_pwd:
+    if not sns_join and pwd != re_pwd:
         return make_resp("E14")
 
     stmt = select(Member).where(Member.user_email==email)

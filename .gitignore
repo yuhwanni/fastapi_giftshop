@@ -24,3 +24,8 @@
 /.idea
 /reward_img/__pycache__
 /reward_img/middleware/__pycache__
+/pincash_ads/__pycache__
+/pincash_ads/database/__pycache__
+/pincash_ads/models/__pycache__
+/pincash_ads/utils/__pycache__
+/pincash_ads_logs

@@ -324,7 +324,7 @@ async def sns_login(member: Member, db: AsyncSession):
     api_logger.info(member.user_sns_type)
     result = await db.execute(select(Member).where(and_(Member.user_sns_key==member.user_sns_key, Member.user_sns_type==member.user_sns_type)))
     api_logger.info('sns_login1')
-    sns_member = result.scalar_one_or_none()
+    sns_member = result.scalar()
     api_logger.info('sns_login2')
     user_seq = ''
 

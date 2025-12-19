@@ -2,6 +2,7 @@
 import asyncio
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.mysql import insert
 
 from pincash_ads.database.async_db import reward_db
 from pincash_ads.models.ads_model import Ads
@@ -10,6 +11,16 @@ import traceback
 
 from pincash_ads.utils.log_util import ads_logger
 import httpx
+
+def map_api_to_ads(item: dict) -> Ads:
+    return Ads(
+        campaign_id=item.get("campaign_id", 0),
+        campaign_name=item.get("campaign_name", ""),
+        campaign_title=item.get("campaign_title",""),
+        campaign_feed_img=item.get("campaign_feed_img",""),
+        campaign_reward_price=item.get("campaign_reward_price",0),
+        campaign_os_type=item.get("campaign_os_type", "ALL")        
+    )
 
 async def _get_ads(page:int, os_type:str, list: list | None = None):
     url = 'https://pcapi.pincash.co.kr/pin/offer.cash'
@@ -40,32 +51,28 @@ async def get_ads(session: Session):
     list = []
     await _get_ads(1, 'A', list)
     await _get_ads(1, 'I', list)
-    
-    for data in list:
-        campaign_id = data.get("campaign_id", 0)
-        campaign_name = data.get("campaign_name", "")
-        campaign_title = data.get("campaign_title", "")
-        campaign_feed_img = data.get("campaign_feed_img", "")
-        campaign_reward_price = data.get("campaign_reward_price", 0)
-        campaign_os_type = data.get("campaigcampaign_os_typen_id", "")
-        campaign_type = data.get("campaign_type", 0)
 
-        if(campaign_type==8):
-            print(campaign_id)
+    ads_objects = [map_api_to_ads(item) for item in list]
 
-            ads = session.query(Ads).filter(Ads.campaign_id == campaign_id).first()
-    
-            if ads:
-                # UPDATE
-                for key, value in data.items():
-                    setattr(ads, key, value)
-            else:
-                # INSERT
-                ads = Ads(campaign_id=campaign_id, **data)
-                session.add(ads)
-            
-            session.commit()
+    for ads in ads_objects:        
+        stmt = insert(Ads).values(
+            campaign_id=ads.campaign_id,
+            campaign_name=ads.campaign_name,
+            campaign_title=ads.campaign_title,
+            campaign_feed_img=ads.campaign_feed_img,
+            campaign_reward_price=ads.campaign_reward_price,
+            campaign_os_type=ads.campaign_os_type            
+        ).on_duplicate_key_update(
+            campaign_name=ads.campaign_name,
+            campaign_title=ads.campaign_title,
+            campaign_feed_img=ads.campaign_feed_img,
+            campaign_reward_price=ads.campaign_reward_price,
+            campaign_os_type=ads.campaign_os_type
+        )
+        await session.execute(stmt)
+        
 
+    await session.commit()
 
 async def main():
     await reward_db._ensure_initialized()
@@ -82,6 +89,7 @@ async def main():
             ads_logger.error(err_msg)    
         finally:
             await session.close()
+            await reward_db.close()
 
 
 if __name__ == "__main__":

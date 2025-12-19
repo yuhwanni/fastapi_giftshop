@@ -54,7 +54,7 @@ class AsyncDatabase:
             
             self.engine = create_async_engine(
                 self.database_url,
-                echo=True,
+                echo=False,
                 pool_pre_ping=True,        # 연결 검증
                 pool_recycle=6,         # 30분마다 재생성
                 pool_timeout=30,           # 풀 대기 타임아웃

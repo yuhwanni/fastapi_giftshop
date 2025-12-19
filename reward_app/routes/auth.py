@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form
 from typing import Optional
-from reward_app.core.security import create_access_token
+from reward_app.core.security import create_access_token, create_refresh_token, verify_token
 from sqlalchemy.ext.asyncio import AsyncSession
 from reward_app.database.async_db import get_async_session
 import bcrypt
@@ -360,9 +360,17 @@ async def join(
     stmt = delete(AuthVerify).where(AuthVerify.auth_token==auth_token)
     await db.execute(stmt)
     
-    if user_seq is not None:
-        await db.commit()
-        return make_resp("S")
+    if user_seq is not None:        
+        access_token = await create_access_token({"sub": email, "user_seq": user_seq})
+        refresh_token = await create_refresh_token({"sub": email, "user_seq": user_seq})
+
+        upd_stmt = update(Member).where(Member.user_seq == user_seq).values(
+            last_login_date=datetime.now(),
+            refresh_token = refresh_token.get("refresh_token")
+        )
+        await db.execute(upd_stmt)
+        await db.commit() 
+        return make_resp("S", {} | access_token | refresh_token)
     else:
         await db.rollback()
         return make_resp("E9")

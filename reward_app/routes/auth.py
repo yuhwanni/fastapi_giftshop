@@ -268,6 +268,9 @@ async def join(
     stmt = select(AuthVerify).where(AuthVerify.auth_token==auth_token)
 
     sns_join = False
+    if not user_sns_type:
+        user_sns_type="NS"
+        
     if user_sns_key!="" and user_sns_type!="":
         sns_join = True
     

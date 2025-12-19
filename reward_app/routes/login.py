@@ -31,6 +31,9 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from reward_app.utils.log_util import api_logger
 
+from sqlalchemy.dialects import mysql
+
+
 router = APIRouter()
 
 class OAuth2EmailRequestForm(OAuth2PasswordRequestForm):
@@ -181,7 +184,7 @@ async def naver_login(access_token: str,user_sns_key: str, db: AsyncSession):
                 birth_day = birthday[2:4]
             user_birth = birthyear.zfill(4)+'-'+birth_month.zfill(2)+'-'+birth_day.zfill(2)
 
-            member = Member
+            member = Member()
             member.user_sns_key = user_sns_key
             member.user_name = user_name
             member.nickname = nickname
@@ -298,7 +301,7 @@ async def kakao_login(access_token: str,user_sns_key: str, db: AsyncSession):
                 birth_day = birthday[3:5]
             user_birth = birthyear.zfill(4)+'-'+birth_month.zfill(2)+'-'+birth_day.zfill(2)
 
-            member = Member
+            member = Member()
             member.user_sns_key = user_sns_key
             member.user_name = user_name
             member.nickname = nickname
@@ -318,60 +321,80 @@ async def kakao_login(access_token: str,user_sns_key: str, db: AsyncSession):
 
     return make_resp("E1001")
 
+# @router.post("/sns_test", name="sns 로그인")
+async def sns_login(
+    db: AsyncSession = Depends(get_async_session)):
+
+    member = Member()
+
+
+
+    member.user_sns_key = '4648016686'
+    member.user_name = '테스트이름'
+    member.nickname = '테스트닉네임임'
+    member.user_email = 'test@email.com'
+    member.user_gender = 'M'
+    member.user_img = ''
+    member.user_phone = ''
+    member.user_birth = '1985-00-00'
+    # member.os_type = os_type
+    member.user_sns_type = 'K'
+    return await sns_login(member, db)
+
 async def sns_login(member: Member, db: AsyncSession):
-    api_logger.info('sns_login')
-    api_logger.info(member.user_sns_key)
-    api_logger.info(member.user_sns_type)
-    result = await db.execute(select(Member).where(and_(Member.user_sns_key==member.user_sns_key, Member.user_sns_type==member.user_sns_type)))
-    api_logger.info('sns_login1')
-    sns_member = result.scalar()
-    api_logger.info('sns_login2')
+    
+    result = await db.execute(select(Member).where(Member.user_sns_key==member.user_sns_key, Member.user_sns_type==member.user_sns_type))
+    
+    sns_member = result.scalars().first()
+    
     user_seq = ''
 
     exist_member = True
 
     # 회원가입 시키고 바로 로그인 토큰 발급
     if sns_member is None:
-        print('sns_member none')
         exist_member = False
-        gen_referral_code = await generate_unique_referral_code(db)
-        stmt = insert(Member).values(
-            user_email=member.user_email,
-            user_sns_key=member.user_sns_key,
-            # user_pwd=member.hashed_password_str,
-            # user_pwd2=member.pwd,
-            user_name=member.user_name,
-            nickname=member.nickname,
-            user_gender=member.user_gender,
-            user_birth=member.user_birth,
-            # user_location=member.location,
-            referral_code=gen_referral_code,
-            user_token=member.user_token,
-            # marketing_yn=member.marketing_yn,
-            device_id=member.device_id,
-            os_type=member.os_type
-        ).returning(Member.user_seq)
-        result = await db.execute(stmt)
-        user_seq = result.scalar()
+        print('sns_member none')
+        # exist_member = False
+        # gen_referral_code = await generate_unique_referral_code(db)
+        # stmt = insert(Member).values(
+        #     user_email=member.user_email,
+        #     user_sns_key=member.user_sns_key,
+        #     # user_pwd=member.hashed_password_str,
+        #     # user_pwd2=member.pwd,
+        #     user_name=member.user_name,
+        #     nickname=member.nickname,
+        #     user_gender=member.user_gender,
+        #     user_birth=member.user_birth,
+        #     # user_location=member.location,
+        #     referral_code=gen_referral_code,
+        #     user_token=member.user_token,
+        #     # marketing_yn=member.marketing_yn,
+        #     device_id=member.device_id,
+        #     os_type=member.os_type
+        # ).returning(Member.user_seq)
+        # result = await db.execute(stmt)
+        # user_seq = result.scalar()
 
-        result = await db.execute(select(Member).where(and_(Member.user_seq==user_seq)))
-        sns_member = result.scalar_one_or_none()
+        # result = await db.execute(select(Member).where(and_(Member.user_seq==user_seq)))
+        # sns_member = result.scalar_one_or_none()
 
-        load_dotenv()
-        JOIN_POINT = int(os.getenv("JOIN_POINT"))
+        # load_dotenv()
+        # JOIN_POINT = int(os.getenv("JOIN_POINT"))
         
-        result2 = await save_point(db, user_seq, "회원가입 포인트 적립", JOIN_POINT, "PC_MEMBER", {"user_seq": user_seq}, "J")
+        # result2 = await save_point(db, user_seq, "회원가입 포인트 적립", JOIN_POINT, "PC_MEMBER", {"user_seq": user_seq}, "J")
 
+    if exist_member:
+        access_token = await create_access_token({"sub": sns_member.user_email, "user_seq": sns_member.user_seq})
+        refresh_token = await create_refresh_token({"sub": sns_member.user_email, "user_seq": sns_member.user_seq})
 
-    access_token = await create_access_token({"sub": sns_member.user_email, "user_seq": sns_member.user_seq})
-    refresh_token = await create_refresh_token({"sub": sns_member.user_email, "user_seq": sns_member.user_seq})
-
-    upd_stmt = update(Member).where(Member.user_seq == sns_member.user_seq).values(
-        last_login_date=datetime.now(),
-        refresh_token = refresh_token.get("refresh_token")
-    )
-    await db.execute(upd_stmt)
-    await db.commit() 
-    
-    return make_resp("S", {exist_member:exist_member} | access_token | refresh_token)
+        upd_stmt = update(Member).where(Member.user_seq == sns_member.user_seq).values(
+            last_login_date=datetime.now(),
+            refresh_token = refresh_token.get("refresh_token")
+        )
+        await db.execute(upd_stmt)
+        await db.commit() 
+        
+        return make_resp("S", {exist_member:exist_member} | access_token | refresh_token)
+    return make_resp("E58")        
     # return make_resp("S", {"access_token": token, "refresh_token":refresh_token})        

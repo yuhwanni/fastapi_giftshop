@@ -29,7 +29,7 @@ from reward_app.service.point_service import save_point
 
 from fastapi.security import OAuth2PasswordRequestForm
 
-
+from reward_app.utils.log_util import api_logger
 
 router = APIRouter()
 
@@ -141,6 +141,8 @@ async def sns_login(
         return await naver_login(access_token, user_sns_key, db);
     else:
         return make_resp("E59",{})       
+
+
 async def naver_login(access_token: str,user_sns_key: str, db: AsyncSession):   
     url = "https://openapi.naver.com/v1/nid/me"
     headers = {
@@ -168,9 +170,9 @@ async def naver_login(access_token: str,user_sns_key: str, db: AsyncSession):
             birthyear = data.get('response', {}).get('birthyear', '')
             user_phone = data.get('response', {}).get('mobile')
 
-            if user_sns_key != id:
-                print(f"user_sns_key:{user_sns_key}, id:{id}")
-                return make_resp("E51",{"kakaoResultCode":resultcode})        
+            if str(user_sns_key) != str(id):
+                api_logger.info(f"user_sns_key:{user_sns_key}, id:{id}")
+                return make_resp("E53",{"kakaoResultCode":resultcode})        
 
             birth_month = ''
             birth_day = ''
@@ -271,8 +273,8 @@ async def kakao_login(access_token: str,user_sns_key: str, db: AsyncSession):
             ci = data.get('kakao_account', {}).get('ci')  # String 연계정보 필수 X
             ci_authenticated_at = data.get('kakao_account', {}).get('ci_authenticated_at')  # Datetime CI 발급 시각, UTC 필수 X
 
-            if user_sns_key != id:
-                print(f"user_sns_key:{user_sns_key}, id:{id}")
+            if str(user_sns_key) != str(id):
+                api_logger.info(f"user_sns_key:{user_sns_key}, id:{id}")
                 return make_resp("E53",{"kakaoResultCode":resultcode})        
             
             user_name = nickname            
@@ -317,15 +319,20 @@ async def kakao_login(access_token: str,user_sns_key: str, db: AsyncSession):
     return make_resp("E1001")
 
 async def sns_login(member: Member, db: AsyncSession):
-
+    api_logger.info('sns_login')
+    api_logger.info(member.user_sns_key)
+    api_logger.info(member.user_sns_type)
     result = await db.execute(select(Member).where(and_(Member.user_sns_key==member.user_sns_key, Member.user_sns_type==member.user_sns_type)))
+    api_logger.info('sns_login1')
     sns_member = result.scalar_one_or_none()
+    api_logger.info('sns_login2')
     user_seq = ''
 
     exist_member = True
 
     # 회원가입 시키고 바로 로그인 토큰 발급
     if sns_member is None:
+        print('sns_member none')
         exist_member = False
         gen_referral_code = await generate_unique_referral_code(db)
         stmt = insert(Member).values(

@@ -53,58 +53,10 @@ async def callback(
     result = await db.execute(stmt)
     ads_complete = result.scalars().first()
 
-    if not ads_complete:
-        
-
-    # 요청이 왔으니 우선 넣는다
-    stmt = insert(AdsComplete).values(
-        ads_id=ads_id,
-        clickid=clickid,
-        ads_name=ads_name,        
-        adid=adid,
-        payout=payout,
-        user_cost=user_cost,
-        unq_campaign=unq_campaign,
-        host_ip=host_ip,
-    ).returning(AdsComplete.complete_seq)
-    result = await db.execute(stmt)
-    complete_seq = result.scalar()
-    if not result:
-        return make_resp("E101")
-
-    await db.commit()
-
-    # 중복 지급 가능 일 경우 체크
-    if unq_campaign=="N":
-        stmt = select(AdsComplete).where(and_(AdsComplete.ads_id == ads_id,AdsComplete.user_seq == user_seq, AdsComplete.point_add_yn=="Y"))
-        result = await db.execute(stmt)
-        ads_complete = result.scalars().first()
-        
-        if ads_complete is not None:
-            return make_resp("E100")
-
-    # 사용자 있는지 확인
-    stmt = select(Member).where(Member.user_seq==user_seq)
-    total_results = await db.execute(select(func.count()).select_from(stmt.subquery()))
-    total_count = total_results.scalar() or 0
-
-    if total_count == 0:
-        return make_resp("E900")
     
-    result2 = await save_point(db, user_seq, f"{ads_name} 광고적립", user_cost, "PC_ADS_COMPLETE", {"complete_seq": complete_seq}, "A")
+
+
     
-    stmt = update(AdsComplete).where(AdsComplete.complete_seq==complete_seq).values(
-        point_add_yn="Y"
-    )
-    result3 = await db.execute(stmt)
-
-
-    if result2 and result3:
-        await db.commit()
-        return make_resp("S")
-    else:
-        await db.rollback()
-        return make_resp("E102")
 
 
 @router.post("/feed_list", name="피드광고")

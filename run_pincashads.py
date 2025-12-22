@@ -14,13 +14,14 @@ import httpx
 
 def map_api_to_ads(item: dict) -> Ads:
     return Ads(
-        campaign_id=item.get("campaign_id", 0),
-        campaign_name=item.get("campaign_name", ""),
-        campaign_title=item.get("campaign_title",""),
-        campaign_feed_img=item.get("campaign_feed_img",""),
-        campaign_reward_price=item.get("campaign_reward_price",0),
-        campaign_os_type=item.get("campaign_os_type", "ALL"),
-        campaign_type=item.get("campaign_type", "")
+        ads_id=item.get("campaign_id", 0),
+        ads_name=item.get("campaign_name", ""),
+        ads_title=item.get("campaign_title",""),
+        ads_condition=item.get("campaign_condition",""),        
+        ads_feed_img=item.get("campaign_feed_img",""),
+        ads_reward_price=item.get("campaign_reward_price",0),
+        ads_os_type=item.get("campaign_os_type", "ALL"),
+        ads_type=item.get("campaign_type", "")
     )
 
 async def _get_ads(page:int, os_type:str, list: list | None = None):
@@ -56,22 +57,24 @@ async def get_ads(session: Session):
     ads_objects = [map_api_to_ads(item) for item in list]
 
     for ads in ads_objects:       
-        if str(ads.campaign_type)=="8":
+        if str(ads.ads_type)=="8":
             stmt = insert(Ads).values(
-                campaign_id=ads.campaign_id,
-                campaign_name=ads.campaign_name,
-                campaign_title=ads.campaign_title,
-                campaign_feed_img=ads.campaign_feed_img,
-                campaign_reward_price=ads.campaign_reward_price,
-                campaign_os_type=ads.campaign_os_type,        
-                campaign_type=ads.campaign_type    
+                ads_id=ads.ads_id,
+                ads_name=ads.ads_name,
+                ads_title=ads.ads_title,
+                ads_condition=ads.ads_condition,
+                ads_feed_img=ads.ads_feed_img,
+                ads_reward_price=ads.ads_reward_price,
+                ads_os_type=ads.ads_os_type,        
+                ads_type=ads.ads_type    
             ).on_duplicate_key_update(
-                campaign_name=ads.campaign_name,
-                campaign_title=ads.campaign_title,
-                campaign_feed_img=ads.campaign_feed_img,
-                campaign_reward_price=ads.campaign_reward_price,
-                campaign_os_type=ads.campaign_os_type,
-                campaign_type=ads.campaign_type        
+                ads_name=ads.ads_name,
+                ads_title=ads.ads_title,
+                ads_condition=ads.ads_condition,
+                ads_feed_img=ads.ads_feed_img,
+                ads_reward_price=ads.ads_reward_price,
+                ads_os_type=ads.ads_os_type,
+                ads_objects_type=ads.ads_type        
             )
             await session.execute(stmt)
         

@@ -8,11 +8,15 @@ import bcrypt
 
 from sqlalchemy import select, insert,update,func, and_
 
+from sqlalchemy import desc, asc
+
+
 from reward_app.models.ads_complete_model import AdsComplete
 from reward_app.models.member_model import Member
 from reward_app.core.config import make_resp
 from reward_app.utils.params import DuplicateYn
 from reward_app.service.point_service import save_point
+from reward_app.models.ads_model import Ads
 
 router = APIRouter()
 
@@ -83,3 +87,16 @@ async def callback(
     else:
         await db.rollback()
         return make_resp("E102")
+
+
+@router.post("/feed_list", name="피드광고")
+async def feed_list(
+    request: Request
+    , limit: int =Form(default=5, description="광고 갯수")
+    , db: AsyncSession = Depends(get_async_session)    
+    ):
+
+    stmt = select(Ads).where(and_(Ads.show_yn == "Y",Ads.ads_type == "8")).order_by(Ads.ads_order.asc(), Ads.upd_date.desc()).limit(limit)
+    result = await db.execute(stmt)
+    list = result.scalars().all()
+    return make_resp("S", {"list":list})

@@ -13,6 +13,7 @@ class Ads(Base):
     
     ads_feed_img = Column(String(255), nullable=True, comment="캠페인 피드 이미지")
     ads_reward_price = Column(Integer, nullable=True, comment="단가")
+    ads_order = Column(Integer, nullable=True, comment="순번")
     ads_os_type = Column(Enum('A', 'I', 'W', 'ALL'), nullable=False, server_default=text("'ALL'"), comment="os type")
     show_yn = Column(Enum('Y', 'N'), nullable=True, server_default=text("'Y'"), comment="노출상태")
     crt_date = Column(DateTime, nullable=True, server_default=text("current_timestamp()"), comment="등록일")

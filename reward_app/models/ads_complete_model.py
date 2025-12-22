@@ -7,6 +7,7 @@ class AdsComplete(Base):
     __tablename__ = "PC_ADS_COMPLETE"
 
     complete_seq = Column(BigInteger, nullable=False, primary_key=True, autoincrement=True, comment="광고 참여완료 순번")
+    clickid = Column(String(64), nullable=False, comment="클릭 아이디")
     ads_id = Column(String(100), nullable=False, comment="광고 아이디")
     ads_name = Column(String(200), nullable=False, comment="광고명")
     user_seq = Column(Integer, nullable=False, comment="사용자 순번")

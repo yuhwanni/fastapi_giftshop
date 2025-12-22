@@ -37,7 +37,7 @@ async def info(
     user_seq = current_user.get('user_seq')
 
     r = await db.execute(select(
-        # Member.user_seq,             # 회원 고유번호 (PK, AUTO_INCREMENT)
+        Member.user_seq,             # 회원 고유번호 (PK, AUTO_INCREMENT)
         Member.user_email,           # 사용자 이메일 (로그인 ID, 고유값)
         # Member.user_sns_key,         # SNS 고유 키 (SNS 로그인 시 사용)
         # Member.user_pwd,             # 사용자 비밀번호 (암호화 저장)

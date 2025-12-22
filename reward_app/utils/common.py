@@ -6,6 +6,8 @@ import random
 import string
 from sqlalchemy import select
 from reward_app.models.member_model import Member
+from reward_app.models.ads_complete_model import AdsComplete
+
 from email_validator import validate_email, EmailNotValidError
 
 from PIL import Image, ImageOps
@@ -52,6 +54,7 @@ def generate_referral_code_random():
     characters = string.ascii_uppercase + string.digits
     return ''.join(random.choices(characters, k=10))
 
+
 async def generate_unique_referral_code(db, max_attempts=10):
     """DB에서 중복 체크하면서 생성"""
     code = ''
@@ -67,6 +70,33 @@ async def generate_unique_referral_code(db, max_attempts=10):
             break
     
     return code
+
+def generate_clickid_random():
+    """랜덤 영문 대문자 + 숫자 조합"""
+    characters = string.ascii_uppercase + string.digits
+    return ''.join(random.choices(characters, k=64))
+
+async def generate_clickid(db, max_attempts=10):
+    """DB에서 중복 체크하면서 생성"""
+    clickid = ''
+    result = False
+    for _ in range(max_attempts):
+        clickid = generate_clickid_random()
+        
+        # 중복 체크
+        stmt = select(AdsComplete).where(AdsComplete.clickid == clickid)
+        result = await db.execute(stmt)
+        existing = result.scalar_one_or_none()
+        
+        if not existing:
+            result = True
+            break
+    if not result:
+        clickid=''
+
+    return clickid
+
+
 
 def is_valid_email(email: str) -> bool:
     try:

@@ -19,6 +19,7 @@ from reward_app.core.config import make_resp
 from reward_app.utils.params import DuplicateYn
 from reward_app.service.point_service import save_point
 from reward_app.models.ads_model import Ads
+from reward_app.utils.log_util import api_logger
 
 router = APIRouter()
 
@@ -36,7 +37,7 @@ async def callback(
     , db: AsyncSession = Depends(get_async_session)    
     ):
     host_ip = request.client.host
-    
+    api_logger.info(f"{host_ip} callback")
     if host_ip not in["127.0.0.1","211.43.213.178"]:
         return ""
     

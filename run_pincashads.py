@@ -1,6 +1,6 @@
 # main.py
 import asyncio
-from sqlalchemy import select
+from sqlalchemy import select, update, not_
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.mysql import insert
 
@@ -55,7 +55,7 @@ async def get_ads(session: Session):
     await _get_ads(1, 'I', list)
 
     ads_objects = [map_api_to_ads(item) for item in list]
-
+    live_ads=[]
     for ads in ads_objects:       
         if str(ads.ads_type)=="8":
             stmt = insert(Ads).values(
@@ -66,7 +66,8 @@ async def get_ads(session: Session):
                 ads_feed_img=ads.ads_feed_img,
                 ads_reward_price=ads.ads_reward_price,
                 ads_os_type=ads.ads_os_type,        
-                ads_type=ads.ads_type    
+                ads_type=ads.ads_type,
+                live_yn="Y"
             ).on_duplicate_key_update(
                 ads_name=ads.ads_name,
                 ads_title=ads.ads_title,
@@ -74,10 +75,22 @@ async def get_ads(session: Session):
                 ads_feed_img=ads.ads_feed_img,
                 ads_reward_price=ads.ads_reward_price,
                 ads_os_type=ads.ads_os_type,
-                ads_objects_type=ads.ads_type        
+                ads_objects_type=ads.ads_type,
+                live_yn="Y"      
             )
             await session.execute(stmt)
-        
+            
+            live_ads.append(ads.ads_id)
+    # 핀캐시 미노출 변경
+    
+    if len(live_ads)>0:
+        stmt = (
+            update(Ads)
+            .where(Ads.ads_id.notin_(live_ads))
+            .values(live_yn="N")
+        )
+
+        await session.execute(stmt)
 
     await session.commit()
 

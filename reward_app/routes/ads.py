@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, Form
-from typing import Optional
+
+from typing import List, Optional
+
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -93,10 +95,15 @@ async def callback(
 async def feed_list(
     request: Request
     , limit: int =Form(default=5, description="광고 갯수")
+    , platforms: Optional[List[str]] = Form(None, description="os 타입 기본 ['A', 'W', 'ALL']")
     , db: AsyncSession = Depends(get_async_session)    
     ):
 
-    stmt = select(Ads).where(and_(Ads.show_yn == "Y",Ads.ads_type == "8")).order_by(Ads.ads_order.asc(), Ads.upd_date.desc()).limit(limit)
+    platforms = [x for x in (platforms or []) if x.strip()]
+
+    platforms = platforms or ["A", "W", "ALL"]
+    
+    stmt = select(Ads).where(and_(Ads.ads_os_type.in_(platforms), Ads.show_yn == "Y",Ads.ads_type == "8", Ads.live_yn == 'Y')).order_by(Ads.ads_order.asc(), Ads.upd_date.desc()).limit(limit)
     result = await db.execute(stmt)
     list = result.scalars().all()
     return make_resp("S", {"list":list})

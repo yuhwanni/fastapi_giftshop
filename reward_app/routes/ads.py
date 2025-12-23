@@ -194,7 +194,7 @@ async def clickid(
     #     status_code=302
     # )
 
-    return make_resp("S", {"join_url":join_url})
+    return make_resp("S", {"url":join_url})
 
     
 

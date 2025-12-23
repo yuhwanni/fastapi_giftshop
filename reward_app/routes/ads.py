@@ -73,6 +73,7 @@ async def callback(
         payout=payout,
         user_cost=user_cost,
         unq_campaign=unq_campaign,
+        complete_yn="Y",
         host_ip=host_ip,
     )
     result1 = await db.execute(stmt)

@@ -203,8 +203,9 @@ async def clickid(
 async def feed_list(
     request: Request
     , limit: int =Form(default=5, description="광고 갯수")
-    , platforms: Optional[List[str]] = Form(None, description="os 타입 기본 ['A', 'W', 'ALL'], PC:전체,WEB, A:Android,WEB,전체, I:iOS,WEB 전체")
-    , db: AsyncSession = Depends(get_async_session)    
+    , platforms: Optional[List[str]] = Form(None, description="os 타입 기본 ['A', 'W', 'ALL'], A:안드로이드, I:ios, W:웹, ALL:전체")
+    # PC:전체,WEB, A:Android,WEB,전체, I:iOS,WEB 전체
+    , db: AsyncSession = Depends(get_async_session)
     ):
 
     platforms = [x for x in (platforms or []) if x.strip()]

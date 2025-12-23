@@ -28,7 +28,7 @@ from reward_app.core.security import get_current_user
 from reward_app.utils.common import generate_clickid
 
 from reward_app.models.ads_complete_model import AdsComplete
-
+from reward_app.utils.common import make_page_info
 import httpx
 from fastapi import HTTPException
 
@@ -210,16 +210,28 @@ async def join_list(
     ):  
     user_seq = current_user.get('user_seq')
     offset = (page - 1) * size
-
+    
     conditions = []
     conditions.append(AdsComplete.user_seq==user_seq)
     if complete_yn:
         conditions.append(AdsComplete.complete_yn==complete_yn)
 
-    stmt = select(AdsComplete.complete_seq, AdsComplete.clickid, AdsComplete.ads_id, AdsComplete.crt_date, AdsComplete.user_cost, Ads.ads_name).outerjoin(Ads, AdsComplete.ads_id==Ads.ads_id).where(*conditions).order_by(AdsComplete.complete_seq.desc()).offset(offset).limit(size)
+    stmt = select(AdsComplete.complete_seq, AdsComplete.complete_yn, AdsComplete.clickid, AdsComplete.ads_id, AdsComplete.crt_date, AdsComplete.user_cost, Ads.ads_name, Ads.ads_reward_price).outerjoin(Ads, AdsComplete.ads_id==Ads.ads_id).where(*conditions).order_by(AdsComplete.complete_seq.desc()).offset(offset).limit(size)
     result = await db.execute(stmt)
-    list = result.scalars().all()
-    return make_resp("S", {"list":list})
+    list = result.mappings().all()
+
+    count_stmt = (
+        select(func.count())
+        .select_from(AdsComplete)
+        .where(*conditions)
+    )
+
+    count_result = await db.execute(count_stmt)
+    total_count = count_result.scalar_one()
+
+    page_info = make_page_info(total_count, page, size)    
+
+    return make_resp("S", {"page_info":page_info, "list":list})
 
 @router.post("/feed_list", name="피드광고")
 async def feed_list(
@@ -236,6 +248,6 @@ async def feed_list(
     
     stmt = select(Ads).where(and_(Ads.ads_os_type.in_(platforms), Ads.show_yn == "Y",Ads.ads_type == "8", Ads.live_yn == 'Y')).order_by(Ads.ads_order.asc(), Ads.upd_date.desc()).limit(limit)
     result = await db.execute(stmt)
-    list = result.scalars().all()
+    list = result.mappings().all()
     return make_resp("S", {"list":list})
 

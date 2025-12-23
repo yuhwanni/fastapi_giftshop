@@ -112,7 +112,7 @@ async def callback(
 {
   "code": "S",
   "msg": "요청성공",
-  "join_url": "https://join.com/join"
+  "url": "https://join.com/join"
 }
 ''')
 async def clickid(

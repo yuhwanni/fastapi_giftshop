@@ -89,7 +89,7 @@ app.include_router(refund.router, prefix="/refund",tags=["환급"])
 app.include_router(gift.router, prefix="/gift",tags=["기프티콘"])
 
 # 명언
-app.include_router(quote.router, prefix="/quote",tags=["명언"], dependencies=[Depends(get_current_user)])
+app.include_router(quote.router, prefix="/quote",tags=["명언"])
 # app.include_router(signup.router, prefix="/signup", tags=["SignUp"])
 # 오늘의 운세
 

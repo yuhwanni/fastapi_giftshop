@@ -212,10 +212,11 @@ async def join_list(
     offset = (page - 1) * size
 
     conditions = []
+    conditions.append(AdsComplete.user_seq==user_seq)
     if complete_yn:
         conditions.append(AdsComplete.complete_yn==complete_yn)
 
-    stmt = select(AdsComplete).where(*conditions).order_by(AdsComplete.complete_seq.desc()).offset(offset).limit(size)
+    stmt = select(AdsComplete.complete_seq, AdsComplete.clickid, AdsComplete.ads_id, AdsComplete.crt_date, AdsComplete.user_cost, Ads.ads_name).outerjoin(Ads, AdsComplete.ads_id==Ads.ads_id).where(*conditions).order_by(AdsComplete.complete_seq.desc()).offset(offset).limit(size)
     result = await db.execute(stmt)
     list = result.scalars().all()
     return make_resp("S", {"list":list})

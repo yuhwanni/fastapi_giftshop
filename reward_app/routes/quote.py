@@ -21,15 +21,14 @@ async def list(
     page: int = Form(default=1, ge=1)
     , size: int = Form(default=20, ge=1)
     , db: AsyncSession = Depends(get_async_session)
-    , current_user = Depends(get_current_user)):
+    ):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
-    user_seq = current_user.get('user_seq')
+    
     offset = (page - 1) * size   
 
     from_qry = """
         FROM
-            PC_QUOTE q
-            LEFT JOIN PC_QUOTE_LIKE ql ON ql.quote_seq = q.quote_seq AND ql.user_seq=:user_seq            
+            PC_QUOTE q            
         WHERE
             q.del_yn = 'N'
     """
@@ -39,11 +38,45 @@ async def list(
         {from_qry}
     """
     qry = f"""
+        SELECT q.quote_seq, q.person_name, q.content        
+        {from_qry}
+    """
+    
+    total_results = await db.execute(text(cnt_qry), {})
+    total_count = total_results.scalar() or 0  # 전체 데이터 개수
+
+    page_info = make_page_info(total_count, page, size)    
+    qry = qry + f" ORDER BY q.quote_seq DESC LIMIT {offset}, {size}"
+    paged_results = await db.execute(text(qry), {})
+
+    list = [dict(row) for row in paged_results.mappings()]
+
+    return make_resp("S",{"page_info": page_info, "list":list, })
+
+@router.post("/my_list", name="나의 명언리스트")
+async def my_list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)
+    , current_user = Depends(get_current_user)):
+    # list = await db.execute(select(Notice).where(Notice.user_email==email))
+    user_seq = current_user.get('user_seq')
+    offset = (page - 1) * size   
+
+    from_qry = """
+        FROM
+            PC_QUOTE q
+            LEFT JOIN PC_QUOTE_LIKE ql ON ql.quote_seq = q.quote_seq
+        WHERE
+            q.del_yn = 'N' AND ql.user_seq=:user_seq    
+    """
+
+    cnt_qry = f"""
+        SELECT count(*) cnt
+        {from_qry}
+    """
+    qry = f"""
         SELECT q.quote_seq, q.person_name, q.content
-        , CASE 
-            WHEN ql.user_seq IS NOT NULL AND ql.user_seq <> '' THEN 'Y'
-            ELSE 'N'
-        END AS is_like
         {from_qry}
     """
     
@@ -57,7 +90,6 @@ async def list(
     list = [dict(row) for row in paged_results.mappings()]
 
     return make_resp("S",{"page_info": page_info, "list":list, })
-
 
 @router.post("/quote_like", name="명언 좋아요/해제")
 async def quote_like(

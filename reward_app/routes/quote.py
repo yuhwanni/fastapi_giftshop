@@ -26,7 +26,6 @@ async def list(
     user_seq = current_user.get('user_seq')
     offset = (page - 1) * size   
 
-
     from_qry = """
         FROM
             PC_QUOTE q

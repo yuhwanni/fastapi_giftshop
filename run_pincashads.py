@@ -57,30 +57,30 @@ async def get_ads(session: Session):
     ads_objects = [map_api_to_ads(item) for item in list]
     live_ads=[]
     for ads in ads_objects:       
-        if str(ads.ads_type)=="8":
-            stmt = insert(Ads).values(
-                ads_id=ads.ads_id,
-                ads_name=ads.ads_name,
-                ads_title=ads.ads_title,
-                ads_condition=ads.ads_condition,
-                ads_feed_img=ads.ads_feed_img,
-                ads_reward_price=ads.ads_reward_price,
-                ads_os_type=ads.ads_os_type,        
-                ads_type=ads.ads_type,
-                live_yn="Y"
-            ).on_duplicate_key_update(
-                ads_name=ads.ads_name,
-                ads_title=ads.ads_title,
-                ads_condition=ads.ads_condition,
-                ads_feed_img=ads.ads_feed_img,
-                ads_reward_price=ads.ads_reward_price,
-                ads_os_type=ads.ads_os_type,
-                ads_objects_type=ads.ads_type,
-                live_yn="Y"      
-            )
-            await session.execute(stmt)
-            
-            live_ads.append(ads.ads_id)
+        
+        stmt = insert(Ads).values(
+            ads_id=ads.ads_id,
+            ads_name=ads.ads_name,
+            ads_title=ads.ads_title,
+            ads_condition=ads.ads_condition,
+            ads_feed_img=ads.ads_feed_img,
+            ads_reward_price=ads.ads_reward_price,
+            ads_os_type=ads.ads_os_type,        
+            ads_type=ads.ads_type,
+            live_yn="Y"
+        ).on_duplicate_key_update(
+            ads_name=ads.ads_name,
+            ads_title=ads.ads_title,
+            ads_condition=ads.ads_condition,
+            ads_feed_img=ads.ads_feed_img,
+            ads_reward_price=ads.ads_reward_price,
+            ads_os_type=ads.ads_os_type,
+            ads_objects_type=ads.ads_type,
+            live_yn="Y"      
+        )
+        await session.execute(stmt)
+        
+        live_ads.append(ads.ads_id)
     # 핀캐시 미노출 변경
     
     if len(live_ads)>0:

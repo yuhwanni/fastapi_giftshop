@@ -116,7 +116,7 @@ async def callback(
   "url": "https://join.com/join"
 }
 ''')
-async def clickid(
+async def join_ads(
     request: Request
     , campaign_id: str =Form()
     # , aff_key: str =Form()
@@ -197,8 +197,28 @@ async def clickid(
 
     return make_resp("S", {"url":join_url})
 
-    
+@router.post("/join_list", name="광고참여 리스트", description='''
+''')
+async def join_list(
+    request: Request    
+    # , aff_key: str =Form()
+    , complete_yn: str =Form(default="", description="빈값 전체, Y 완료, N 진행중")
+    , page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)    
+    , db: AsyncSession = Depends(get_async_session)
+    , current_user = Depends(get_current_user)
+    ):  
+    user_seq = current_user.get('user_seq')
+    offset = (page - 1) * size
 
+    conditions = []
+    if complete_yn:
+        conditions.append(AdsComplete.complete_yn==complete_yn)
+
+    stmt = select(AdsComplete).where(*conditions).order_by(AdsComplete.complete_seq.desc()).offset(offset).limit(size)
+    result = await db.execute(stmt)
+    list = result.scalars().all()
+    return make_resp("S", {"list":list})
 
 @router.post("/feed_list", name="피드광고")
 async def feed_list(

@@ -125,7 +125,7 @@ async def clickid(
     , current_user = Depends(get_current_user)
     ):
     
-    host_ip = request.client.host
+    join_ip = request.client.host
 
     if not adid and not idfa:
         return make_resp("E110")
@@ -179,7 +179,7 @@ async def clickid(
     stmt = insert(AdsComplete).values(
         user_seq=user_seq,
         clickid=clickid,
-        host_ip=host_ip,
+        join_ip=join_ip,
         ads_id=campaign_id
     ).returning(AdsComplete.complete_seq)
     result = await db.execute(stmt)

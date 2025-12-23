@@ -17,6 +17,7 @@ class AdsComplete(Base):
     unq_campaign = Column(Enum('Y', 'N'), nullable=False, server_default=text("'N'"), comment="중복지급가능여부")
     point_add_yn = Column(Enum('Y', 'N'), nullable=False, server_default=text("'N'"), comment="포인트 지급여부")
     host_ip = Column(String(50), nullable=False, server_default=text("''"), comment="host ip")
+    join_ip = Column(String(50), nullable=False, server_default=text("''"), comment="join_ip")
     crt_date = Column(DateTime, nullable=True, server_default=text("current_timestamp()"), comment="생성일")
     crt_id = Column(String(50), nullable=True, comment="생성자 아이디")
     upd_date = Column(DateTime, nullable=True, server_default=text("current_timestamp()"), onupdate=text("current_timestamp()"), comment="수정일")

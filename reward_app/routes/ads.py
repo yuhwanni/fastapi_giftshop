@@ -108,7 +108,13 @@ async def callback(
         await db.rollback()
         return make_resp("E102")
 
-@router.post("/join_ads", name="광고참여")
+@router.post("/join_ads", name="광고참여", description='''
+{
+  "code": "S",
+  "msg": "요청성공",
+  "join_url": "https://join.com/join"
+}
+''')
 async def clickid(
     request: Request
     , campaign_id: str =Form()
@@ -183,12 +189,12 @@ async def clickid(
         return make_resp("E104")
     await db.commit()
     
-    return RedirectResponse(
-        url=join_url,
-        status_code=302
-    )
+    # return RedirectResponse(
+    #     url=join_url,
+    #     status_code=302
+    # )
 
-    # return make_resp("S", {"join_url":join_url})
+    return make_resp("S", {"join_url":join_url})
 
     
 

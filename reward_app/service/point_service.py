@@ -28,8 +28,10 @@ async def save_point(db: AsyncSession, user_seq:int, point_name:str, point:int=0
 
     result = False
     if result2 and result3:
+        await db.commit()
         result = True
-
+    else:
+        await db.rollback()
     # if callback:
     #     try:
     #         if inspect.iscoroutinefunction(callback):
@@ -43,7 +45,6 @@ async def save_point(db: AsyncSession, user_seq:int, point_name:str, point:int=0
 
 async def reduce_point(db: AsyncSession, user_seq:int, point_name:str, point:int=0, table_name:str="", table_seq:int=0, point_type:str=""):    
     
-
     member_stmt = select(Member).where(Member.user_seq==user_seq)
     member_result = await db.execute(member_stmt)
     member = member_result.scalars().first()
@@ -71,8 +72,10 @@ async def reduce_point(db: AsyncSession, user_seq:int, point_name:str, point:int
 
     result = False
     if result2 and result3:
+        await db.commit()
         result = True
-
+    else:
+        await db.rollback()
     # if callback:
     #     try:
     #         if inspect.iscoroutinefunction(callback):

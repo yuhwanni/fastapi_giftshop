@@ -7,18 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import inspect
 
 
-async def save_point(db: AsyncSession, user_seq:int, point_name:str, point:int=0, table_name:str="", seqs:{}={}, point_type:str=""):    
-    ref_info = {"table":table_name, "seq": seqs}
-
-    ref_info_json_string = json.dumps(ref_info, ensure_ascii=False, indent=4)
-
+async def save_point(db: AsyncSession, user_seq:int, point_name:str, point:int=0, table_name:str="", table_seq:int=0, point_type:str=""):    
+    
     stmt = insert(PointHistory).values(
         user_seq = user_seq,
         point_name = point_name,
         point = point,
         earn_use_type = "E",
         point_type = point_type,
-        ref_info = ref_info_json_string,
+        table_name = table_name,
+        table_seq = table_seq
     )
     result2 = await db.execute(stmt)
     
@@ -43,10 +41,16 @@ async def save_point(db: AsyncSession, user_seq:int, point_name:str, point:int=0
 
     return result
 
-async def reduce_point(db: AsyncSession, user_seq:int, point_name:str, point:int=0, table_name:str="", seqs:{}={}, point_type:str=""):    
-    ref_info = {"table":table_name, "seq": seqs}
+async def reduce_point(db: AsyncSession, user_seq:int, point_name:str, point:int=0, table_name:str="", table_seq:int=0, point_type:str=""):    
+    
 
-    ref_info_json_string = json.dumps(ref_info, ensure_ascii=False, indent=4)
+    member_stmt = select(Member).where(Member.user_seq==user_seq)
+    member_result = await db.execute(member_stmt)
+    member = member_result.scalars().first()
+    user_point = member.user_point
+
+    if user_point < point:
+        return False
 
     stmt = insert(PointHistory).values(
         user_seq = user_seq,
@@ -54,7 +58,8 @@ async def reduce_point(db: AsyncSession, user_seq:int, point_name:str, point:int
         point = point,
         earn_use_type = "U",
         point_type = point_type,
-        ref_info = ref_info_json_string,
+        table_name = table_name,
+        table_seq = table_seq
     )
     result2 = await db.execute(stmt)
     

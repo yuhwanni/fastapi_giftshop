@@ -153,18 +153,19 @@ async def quiz_answer(
     is_correct = "N"
     if answer == quiz.answer:
         is_correct = "Y"
+
     stmt = insert(QuizJoin).values(
         quiz_seq=quiz_seq,
         user_seq=user_seq,
         submit_answer=answer,
         is_correct=is_correct
-    )
+    ).returning(QuizJoin.quiz_join_seq)
     result1 = await db.execute(stmt)
-    
+    quiz_join_seq = result1.scalar()
     result2 = True
 
     if is_correct == "Y":
-        result2 = await save_point(db, user_seq, "퀴즈정답 포인트 적립", quiz.reward_point, "PC_QUIZ_JOIN", {"quiz_seq": quiz_seq, "user_seq": user_seq}, "Q")
+        result2 = await save_point(db, user_seq, "퀴즈정답 포인트 적립", quiz.reward_point, "PC_QUIZ_JOIN", quiz_join_seq, "Q")
         # ref_info = {"table":"PC_QUIZ_JOIN", "seq": {"quiz_seq": quiz_seq, "user_seq": user_seq}}
 
         # ref_info_json_string = json.dumps(ref_info, ensure_ascii=False, indent=4)

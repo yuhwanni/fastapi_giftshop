@@ -93,7 +93,7 @@ async def request_proc(
     result = await db.execute(stmt)
     refund_seq = result.scalar()
 
-    result2 = await reduce_point(db, user_seq, "환급신청", refund_amount, "PC_REFUND", {"refund_seq": refund_seq}, "R")
+    result2 = await reduce_point(db, user_seq, "환급신청", refund_amount, "PC_REFUND", refund_seq, "R")
     if refund_seq and result2:
         await db.commit()
         return make_resp("S")

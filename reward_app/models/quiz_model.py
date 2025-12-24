@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, BigInteger, Integer, Date, DateTime, Enum, text, Index, select, and_, ForeignKey
+from sqlalchemy import Column, String, BigInteger, Integer, Date, DateTime, Enum, text, Index, select, and_, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import date
 
@@ -35,8 +35,9 @@ class Quiz(Base):
 class QuizJoin(Base):
     __tablename__ = "PC_QUIZ_JOIN"
 
-    quiz_seq = Column(BigInteger, nullable=False, primary_key=True, comment="퀴즈 순번 (PC_QUIZ 참조)")
-    user_seq = Column(Integer, nullable=False, primary_key=True, comment="회원 순번")
+    quiz_join_seq = Column(Integer, primary_key=True, autoincrement=True, comment="퀴즈참여 순번")
+    quiz_seq = Column(BigInteger, nullable=False, comment="퀴즈 순번 (PC_QUIZ 참조)")
+    user_seq = Column(Integer, nullable=False, comment="회원 순번")
     submit_answer = Column(String(200), nullable=False, comment="제출정답")
     is_correct = Column(Enum('Y', 'N'), nullable=False, comment="정답여부")
     crt_date = Column(DateTime, nullable=True, server_default=text("current_timestamp()"), comment="생성일")
@@ -47,13 +48,11 @@ class QuizJoin(Base):
     del_id = Column(String(50), nullable=True, comment="삭제자 아이디")
     del_yn = Column(Enum('Y', 'N'), nullable=True, server_default=text("'N'"), comment="삭제여부")
 
-    # 1:1 Relationship
-    # quiz = relationship("Quiz", back_populates="quiz_join")
-    # quiz = relationship("QuizModel", back_populates="quiz_join", primaryjoin="Quiz.quiz_seq==QuizJoin.quiz_seq")
-
     __table_args__ = (
+        UniqueConstraint('quiz_seq', 'user_seq', name='quiz_seq_user_seq'),
         Index('idx_user_seq', 'user_seq'),
         Index('idx_is_correct', 'is_correct'),
         Index('idx_del_yn', 'del_yn'),
         Index('idx_crt_date', 'crt_date'),
+        {'comment': '퀴즈참여 테이블', 'mysql_engine': 'InnoDB', 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci'}
     )

@@ -85,7 +85,7 @@ async def request_proc(
     result = await db.execute(stmt)
     donation_seq = result.scalar()
 
-    result2 = await reduce_point(db, user_seq, "기부신청", donation_point, "PC_DONATION", {"donation_seq": donation_seq}, "D")
+    result2 = await reduce_point(db, user_seq, "기부신청", donation_point, "PC_DONATION", donation_seq, "D")
     if donation_seq and result2:
         await db.commit()
         return make_resp("S")

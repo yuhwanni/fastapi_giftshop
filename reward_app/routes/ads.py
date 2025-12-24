@@ -95,7 +95,7 @@ async def callback(
     if total_count == 0:
         return make_resp("E900")
 
-    result2 = await save_point(db, user_seq, f"{ads_name} 광고적립", user_cost, "PC_ADS_COMPLETE", {"complete_seq": ads_complete.complete_seq}, "A")
+    result2 = await save_point(db, user_seq, f"{ads_name} 광고적립", user_cost, "PC_ADS_COMPLETE", ads_complete.complete_seq, "A")
     
     stmt = update(AdsComplete).where(AdsComplete.complete_seq==ads_complete.complete_seq).values(
         point_add_yn="Y"

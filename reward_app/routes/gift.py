@@ -193,7 +193,7 @@ async def send_proc(
 
     # 포인트 차감
     # send_result        
-    point_result = await reduce_point(db, user_seq, f"상품구입 {goods_name}", goods_price, "API_GIFTISHOW_SEND", {"order_no": order_no}, "G")
+    point_result = await reduce_point(db, user_seq, f"상품구입 {goods_name}", goods_price, "API_GIFTISHOW_SEND", order_no, "G")
 
     if point_result:       
         await db.commit() 

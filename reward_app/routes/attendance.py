@@ -113,13 +113,14 @@ async def check(
         user_seq = user_seq,
         attendance_date = today,
         point = ATTENDANCE_POINT
-    )
+    ).returning(Attendance.attendance_seq)
     result1 = await db.execute(stmt)
-    
+    attendance_seq = result1.scalar()
+
     result2 = True
 
     if result1 and ATTENDANCE_POINT > 0:
-        result2 = await save_point(db, user_seq, "출석 체크 적립", ATTENDANCE_POINT, "PC_ATTENDANCE", {"attendance_date": today, "user_seq": user_seq}, "T")
+        result2 = await save_point(db, user_seq, "출석 체크 적립", ATTENDANCE_POINT, "PC_ATTENDANCE", attendance_seq, "T")
 
          
 

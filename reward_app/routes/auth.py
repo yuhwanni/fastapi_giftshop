@@ -352,7 +352,7 @@ async def join(
     JOIN_POINT = int(os.getenv("JOIN_POINT"))
     REFERRAL_POINT = int(os.getenv("REFERRAL_POINT"))
     
-    result2 = await save_point(db, user_seq, "회원가입 포인트 적립", JOIN_POINT, "PC_MEMBER", {"user_seq": user_seq}, "J")
+    result2 = await save_point(db, user_seq, "회원가입 포인트 적립", JOIN_POINT, "PC_MEMBER", user_seq, "J")
 
     # 추천인 코드 있을 경우 포인트 지급
     if referral_code is not None and referral_code != "":
@@ -364,7 +364,7 @@ async def join(
         re_member = result.scalars().first()
         
         if re_member is not None:
-            result3 = await save_point(db, re_member.user_seq, "추천 포인트 적립", REFERRAL_POINT, "PC_MEMBER", {"user_seq": user_seq}, "I")
+            result3 = await save_point(db, re_member.user_seq, "추천 포인트 적립", REFERRAL_POINT, "PC_MEMBER", re_member.user_seq, "I")
 
     stmt = delete(AuthVerify).where(AuthVerify.auth_token==auth_token)
     await db.execute(stmt)

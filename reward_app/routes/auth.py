@@ -466,8 +466,8 @@ async def change_pwd(
         user_pwd2=pwd,
     )
     result = await db.execute(stmt)
-    
-    if result is not None:
+    await db.commit()
+    if result:
         stmt = delete(AuthVerify).where(AuthVerify.auth_token==auth_token)
         await db.execute(stmt)
         await db.commit()

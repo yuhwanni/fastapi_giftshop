@@ -126,10 +126,12 @@ async def info_update_proc(
     )
     # print(stmt.subquery())
     result = await db.execute(stmt)
-    await db.commit()
+    
     if result:
+        await db.commit()
         return make_resp("S")
     else:
+        await db.rollback()
         return make_resp("E60")
 
 
@@ -176,10 +178,12 @@ async def pwd_update_proc(
         user_pwd2=pwd
     )
     result = await db.execute(stmt)
-    await db.commit()
+    
     if result:
+        await db.commit()
         return make_resp("S")
     else:
+        await db.rollback()
         return make_resp("E60")
 
 @router.post("/del/proc", name="회원탈퇴")
@@ -192,16 +196,16 @@ async def del_proc(
 
     if agree_yn !="Y":
         return make_resp("E64")
-    # 기존 비밀번호 맞는지 확인
     
-
     stmt = update(Member).where(Member.user_seq==user_seq).values(
         user_stat='N',
         del_date=datetime.now()
     )
     result = await db.execute(stmt)
-    await db.commit()
+    
     if result:
+        await db.commit()
         return make_resp("S")
     else:
+        await db.rollback()
         return make_resp("E65")

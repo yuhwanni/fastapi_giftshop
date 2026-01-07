@@ -10,6 +10,7 @@ from reward_app.models.member_model import Member
 
 import os
 from dotenv import load_dotenv
+from reward_app.utils.log_util import api_logger as logger
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")
@@ -47,6 +48,7 @@ async def create_refresh_token(data: dict, expires_delta: int = REFRESH_TOKEN_EX
     # return {"refresh_token":refresh_token}
 
 async def verify_token(token: str, token_type: str = "access"):
+    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         if payload.get("type") != token_type:
@@ -64,17 +66,25 @@ async def verify_token(token: str, token_type: str = "access"):
         # if now>expire_date:
         #     return None
         return payload
-    except JWTError:
+    except Exception:
         return None
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):    
+    
+    payload = await verify_token(token, token_type="access")
+    if not payload:    
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=make_resp("E500", {"abcd":"efg"}))        
+    return payload
+
+async def get_current_user_optional(token: str = Depends(oauth2_scheme)):    
+    
     payload = await verify_token(token, token_type="access")
     if not payload:
-        # return make_resp("E500")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=make_resp("E500", {}))
+        return None
     return payload
+    
 
 async def get_user_seq(current_user):
     return current_user.get('user_seq')

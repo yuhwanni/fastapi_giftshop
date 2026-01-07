@@ -96,7 +96,7 @@ app.include_router(quote.router, prefix="/quote",tags=["명언"])
 # 출석
 app.include_router(attendance.router, prefix="/attendance",tags=["출석체크"])
 # 퀴즈
-app.include_router(quiz.router, prefix="/quiz",tags=["퀴즈"], dependencies=[Depends(get_current_user)])
+app.include_router(quiz.router, prefix="/quiz",tags=["퀴즈"])
 # 추천인
 app.include_router(referral.router, prefix="/referral",tags=["추천인"], dependencies=[Depends(get_current_user)])
 

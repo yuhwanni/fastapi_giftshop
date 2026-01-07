@@ -28,19 +28,16 @@ async def list(
     page: int = Form(default=1, ge=1)
     , size: int = Form(default=20, ge=1)
     , db: AsyncSession = Depends(get_async_session)
-    , current_user = Depends(get_current_user), 
 ):
     # list = await db.execute(select(Notice).where(Notice.user_email==email))
     
-    user_seq = current_user.get('user_seq')
     offset = (page - 1) * size   
 
     today = datetime.now().strftime('%Y-%m-%d')
 
     from_qry = """
         FROM
-            PC_QUIZ q
-            LEFT JOIN PC_QUIZ_JOIN qj ON qj.quiz_seq = q.quiz_seq AND qj.user_seq=:user_seq
+            PC_QUIZ q            
         WHERE
             q.del_yn = 'N'
             AND q.start_date <= DATE(:today)
@@ -52,24 +49,24 @@ async def list(
         {from_qry}
     """
     qry = f"""
-        SELECT q.quiz_seq, q.quiz, q.answer, q.hint, q.reward_point, IFNULL(qj.submit_answer, '') submit_answer, IFNULL(qj.is_correct, '') is_correct
+        SELECT q.quiz_seq, q.quiz, q.answer, q.hint, q.reward_point
         {from_qry}
     """
     
-    total_results = await db.execute(text(cnt_qry), {'user_seq':user_seq, 'today': today})
+    total_results = await db.execute(text(cnt_qry), {'today': today})
     total_count = total_results.scalar() or 0  # 전체 데이터 개수
 
     page_info = make_page_info(total_count, page, size)    
     qry = qry + f" ORDER BY q.quiz_seq DESC LIMIT {offset}, {size}"
-    paged_results = await db.execute(text(qry), {'user_seq':user_seq, 'today': today})
+    paged_results = await db.execute(text(qry), {'today': today})
 
     list = [dict(row) for row in paged_results.mappings()]
 
     return make_resp("S",{"page_info": page_info, "list":list, })
 
 
-@router.post("/last_list", name="지난 퀴즈")
-async def last_list(
+@router.post("/join_list", name="참여 퀴즈 리스트")
+async def list(
     page: int = Form(default=1, ge=1)
     , size: int = Form(default=20, ge=1)
     , db: AsyncSession = Depends(get_async_session)
@@ -80,15 +77,12 @@ async def last_list(
     user_seq = current_user.get('user_seq')
     offset = (page - 1) * size   
 
-    today = datetime.now().strftime('%Y-%m-%d')
-
     from_qry = """
         FROM
             PC_QUIZ q
-            LEFT JOIN PC_QUIZ_JOIN qj ON qj.quiz_seq = q.quiz_seq AND qj.user_seq=:user_seq
+            INNER JOIN PC_QUIZ_JOIN qj ON qj.quiz_seq = q.quiz_seq AND qj.user_seq=:user_seq
         WHERE
-            q.del_yn = 'N'            
-            AND q.end_date < DATE(:today)
+            q.del_yn = 'N'
     """
 
     cnt_qry = f"""
@@ -100,12 +94,54 @@ async def last_list(
         {from_qry}
     """
     
-    total_results = await db.execute(text(cnt_qry), {'user_seq':user_seq, 'today': today})
+    total_results = await db.execute(text(cnt_qry), {'user_seq':user_seq})
     total_count = total_results.scalar() or 0  # 전체 데이터 개수
 
     page_info = make_page_info(total_count, page, size)    
     qry = qry + f" ORDER BY q.quiz_seq DESC LIMIT {offset}, {size}"
-    paged_results = await db.execute(text(qry), {'user_seq':user_seq, 'today': today})
+    paged_results = await db.execute(text(qry), {'user_seq':user_seq})
+
+    list = [dict(row) for row in paged_results.mappings()]
+
+    return make_resp("S",{"page_info": page_info, "list":list, })
+
+
+
+@router.post("/last_list", name="지난 퀴즈")
+async def last_list(
+    page: int = Form(default=1, ge=1)
+    , size: int = Form(default=20, ge=1)
+    , db: AsyncSession = Depends(get_async_session)
+):
+    # list = await db.execute(select(Notice).where(Notice.user_email==email))
+    
+    offset = (page - 1) * size   
+
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    from_qry = """
+        FROM
+            PC_QUIZ q
+        WHERE
+            q.del_yn = 'N'            
+            AND q.end_date < DATE(:today)
+    """
+
+    cnt_qry = f"""
+        SELECT count(*) cnt
+        {from_qry}
+    """
+    qry = f"""
+        SELECT q.quiz_seq, q.quiz, q.answer, q.hint, q.reward_point
+        {from_qry}
+    """
+    
+    total_results = await db.execute(text(cnt_qry), {'today': today})
+    total_count = total_results.scalar() or 0  # 전체 데이터 개수
+
+    page_info = make_page_info(total_count, page, size)    
+    qry = qry + f" ORDER BY q.quiz_seq DESC LIMIT {offset}, {size}"
+    paged_results = await db.execute(text(qry), {'today': today})
 
     list = [dict(row) for row in paged_results.mappings()]
 

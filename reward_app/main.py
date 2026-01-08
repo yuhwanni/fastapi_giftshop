@@ -10,7 +10,7 @@ from reward_app.middleware.logging_middleware import (
     SelectiveLoggingMiddleware
 )
 from reward_app.utils.log_util import api_logger
-from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login, point, my, help, ads, inquiry, refund, donation, gift
+from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login, point, my, help, ads, inquiry, refund, donation, gift, zodiac
 from reward_app.docs.openapi_custom import custom_openapi
 from contextlib import asynccontextmanager
 from reward_app.core.security import get_current_user
@@ -110,6 +110,7 @@ app.include_router(referral.router, prefix="/referral",tags=["추천인"], depen
 app.include_router(ads.router, prefix="/ads",tags=["광고"])
 # app.include_router(attendance.router, prefix="/attendance",tags=["출석체크"], dependencies=[Depends(get_current_user)])
 
+app.include_router(zodiac.router, prefix="/zodiac",tags=["운세"])
 
 
 # ✅ Swagger 전역 인증 적용

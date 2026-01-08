@@ -1,6 +1,8 @@
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
+
 from datetime import datetime
 from contextlib import asynccontextmanager
 from sqlalchemy import text
@@ -16,7 +18,6 @@ import traceback
 
 load_dotenv()
 
-
 # -----------------------------
 # 환경 변수
 # -----------------------------
@@ -31,6 +32,38 @@ REWARD_DB_PASS = os.getenv("DB_PASS2")
 REWARD_DB_HOST = os.getenv("DB_HOST2", "localhost")
 REWARD_DB_PORT = os.getenv("DB_PORT2", "3306")
 REWARD_DB_NAME = os.getenv("DB_NAME2")
+
+#로그 시작
+SQL_LOG_DIR = "/home/git_project_2025/db_logs"
+os.makedirs(SQL_LOG_DIR, exist_ok=True)
+
+def setup_sqlalchemy_logger():
+    logger = logging.getLogger("sqlalchemy.engine")
+    logger.setLevel(logging.DEBUG)
+
+    handler = TimedRotatingFileHandler(
+        filename=os.path.join(SQL_LOG_DIR, "sql.log"),
+        when="midnight",
+        interval=1,
+        backupCount=30,
+        encoding="utf-8",
+        utc=False
+    )
+
+    # ⭐ 이 suffix가 핵심
+    handler.suffix = "%Y-%m-%d"
+
+    formatter = logging.Formatter(
+        "[%(asctime)s] [%(levelname)s] %(message)s"
+    )
+    handler.setFormatter(formatter)
+
+    if not logger.handlers:
+        logger.addHandler(handler)
+
+    logger.propagate = False
+
+setup_sqlalchemy_logger()
 
 # -----------------------------
 # AsyncDatabase
@@ -54,7 +87,7 @@ class AsyncDatabase:
             
             self.engine = create_async_engine(
                 self.database_url,
-                echo=True,
+                # echo=True,
                 pool_pre_ping=True,        # 연결 검증
                 pool_recycle=6,         # 30분마다 재생성
                 pool_timeout=30,           # 풀 대기 타임아웃
@@ -66,6 +99,7 @@ class AsyncDatabase:
                     "autocommit": False,
                     "charset": "utf8mb4",
                 },
+                
             )
             
             self.async_session = async_sessionmaker(

@@ -9,7 +9,7 @@ from reward_app.middleware.logging_middleware import (
     simple_logging_middleware,
     SelectiveLoggingMiddleware
 )
-from reward_app.utils.log_util import app_logger
+from reward_app.utils.log_util import api_logger
 from reward_app.routes import auth, notice, quote, quiz, referral, attendance, code, login, point, my, help, ads, inquiry, refund, donation, gift
 from reward_app.docs.openapi_custom import custom_openapi
 from contextlib import asynccontextmanager
@@ -38,7 +38,7 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
     code = detail.get("code", None)
     if exc.status_code==401 and code is None:
         code="E500"
-    return JSONResponse(
+    resp = JSONResponse(
         status_code=exc.status_code,
         content={
             # "success": False,
@@ -47,6 +47,9 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
             "origin_code":exc.status_code
         }
     )
+    api_logger.info(resp)
+
+    return resp
 
 @app.get("/health")
 async def health():

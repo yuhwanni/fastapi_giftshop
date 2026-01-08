@@ -75,7 +75,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     
     payload = await verify_token(token, token_type="access")
     if not payload:    
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=make_resp("E500", {"abcd":"efg"}))        
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=make_resp("E500", ))        
     return payload
 
 async def get_current_user_optional(token: str = Depends(oauth2_scheme)):    

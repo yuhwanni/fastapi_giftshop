@@ -38,7 +38,7 @@ async def list(
 ):
     user_seq = current_user.get('user_seq')
 
-    if ym is None:
+    if not ym:
         ym = datetime.now().strftime("%Y-%m")
 
     year, month = map(int, ym.split("-"))
@@ -91,7 +91,7 @@ async def check(
     
 
     today = datetime.now().date()
-    # 퀴즈가 존재하고 유효기간안에 있는지 확인인
+    
     stmt = select(Attendance).where(and_(
         Attendance.user_seq == user_seq,
         Attendance.attendance_date == today
@@ -99,10 +99,10 @@ async def check(
     
     
     r = await db.execute(stmt)
-    Attendance = r.scalars().first()
+    attendance = r.scalars().first()
     
 
-    if Attendance is not None:
+    if attendance:
         return make_resp("S", {"msg":"오늘 출석 완료"})
 
     load_dotenv()
@@ -121,9 +121,7 @@ async def check(
 
     if result1 and ATTENDANCE_POINT > 0:
         result2 = await save_point(db, user_seq, "출석 체크 적립", ATTENDANCE_POINT, "PC_ATTENDANCE", attendance_seq, "T")
-
-         
-
+        
     if result1 and result2:
         await db.commit()
         return make_resp("S")

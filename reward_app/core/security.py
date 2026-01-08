@@ -1,5 +1,5 @@
 from datetime import datetime, timezone, timedelta, UTC
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 # from reward_app.core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
@@ -48,7 +48,9 @@ async def create_refresh_token(data: dict, expires_delta: int = REFRESH_TOKEN_EX
     # return {"refresh_token":refresh_token}
 
 async def verify_token(token: str, token_type: str = "access"):
-    
+    if not token:
+        return None
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         if payload.get("type") != token_type:
@@ -66,8 +68,12 @@ async def verify_token(token: str, token_type: str = "access"):
         # if now>expire_date:
         #     return None
         return payload
-    except Exception:
+    except ExpiredSignatureError:
         return None
+    except JWTError:
+        return None
+    # except Exception:
+    #     return None
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 

@@ -29,3 +29,4 @@
 /pincash_ads/models/__pycache__
 /pincash_ads/utils/__pycache__
 /pincash_ads_logs
+.env

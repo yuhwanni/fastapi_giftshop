@@ -44,6 +44,7 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
             # "success": False,
             "code": code,
             "msg": detail.get("msg", str(exc.detail)),
+            "origin_code":exc.status_code
         }
     )
 

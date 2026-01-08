@@ -75,7 +75,7 @@ async def get_ads(session: Session):
             ads_feed_img=ads.ads_feed_img,
             ads_reward_price=ads.ads_reward_price,
             ads_os_type=ads.ads_os_type,
-            ads_objects_type=ads.ads_type,
+            ads_type=ads.ads_type,
             live_yn="Y"      
         )
         await session.execute(stmt)

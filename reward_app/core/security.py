@@ -78,15 +78,25 @@ async def verify_token(token: str, token_type: str = "access"):
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):    
+
+    logger.info(f"yuhwanni 1 :{token}")
     
     payload = await verify_token(token, token_type="access")
+
+    logger.info(f"yuhwanni 1 :{payload}")
+
     if not payload:    
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=make_resp("E500", ))        
     return payload
 
 async def get_current_user_optional(token: str = Depends(oauth2_scheme)):    
     
+    logger.info(f"yuhwanni 2 :{token}")
+
     payload = await verify_token(token, token_type="access")
+
+    logger.info(f"yuhwanni 2 :{payload}")
+
     if not payload:
         return None
     return payload

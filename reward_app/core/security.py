@@ -56,7 +56,7 @@ def is_token_expired(payload: dict) -> bool:
     
     return now > exp
 
-async def verify_token(token: str, token_type: str = "access"):
+async def verify_token_old(token: str, token_type: str = "access"):
     if not token:
         return None
 
@@ -84,34 +84,48 @@ async def verify_token(token: str, token_type: str = "access"):
     # except Exception:
     #     return None
 
+async def verify_token(token: str, token_type: str = "access"):
+    try:
+        logger.info(f"[verify_token] raw token = {token}")
+        logger.info(f"[verify_token] token_type = {token_type}")
+
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        logger.info(f"[verify_token] decoded payload = {payload}")
+        return payload
+
+    except ExpiredSignatureError as e:
+        logger.error(f"[verify_token] EXPIRED token: {e}")
+        return None
+
+    except JWTError as e:
+        logger.error(f"[verify_token] JWT ERROR: {e}")
+        return None
+
+    except Exception as e:
+        logger.error(f"[verify_token] UNKNOWN ERROR: {e}")
+        return None
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
-    payload = await verify_token(token, token_type="access")
+    logger.info(f"[get_current_user] token = {token}")
 
-    # 1) payload 검증을 먼저
+    payload = await verify_token(token, token_type="access")
+    logger.info(f"[get_current_user] payload = {payload}")
+
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=make_resp("E500")
+            detail=make_resp("E500", "토큰이 유효 하지 않음")
         )
-
-    # 2) 만료 검사 (exp 없으면 만료로 처리하는 방식 권장)
-    if is_token_expired(payload):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=make_resp("E401", "Token expired (토큰만료)")
-        )
-
-    # 3) 로그는 exp 있을 때만 (디버깅용)    
-    exp = payload.get("exp")
-    logger.d("YUHWANNI {token}, {exp}")
-    if exp is not None:
-        now_dt = datetime.now(timezone.utc)
-        exp_dt = datetime.fromtimestamp(exp, tz=timezone.utc)
-        logger.info(f"{now_dt.isoformat()} ===> Token expires at: {exp_dt.isoformat()}")
 
     return payload
+
 
 async def get_current_user_optional(token: str = Depends(oauth2_scheme)):        
     payload = await verify_token(token, token_type="access")

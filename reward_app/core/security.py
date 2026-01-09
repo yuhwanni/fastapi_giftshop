@@ -53,9 +53,6 @@ def is_token_expired(payload: dict) -> bool:
         return True  # exp 없으면 만료 처리
 
     now = datetime.now(timezone.utc).timestamp()
-
-    exp_time = datetime.fromtimestamp(exp, tz=timezone.utc)
-    logger.info(f"{now} ===> Token expires at: {exp_time}")
     
     return now > exp
 
@@ -91,6 +88,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):        
     payload = await verify_token(token, token_type="access")
+
+    exp = payload.get("exp")
+    now = datetime.now(timezone.utc).timestamp()
+    exp_time = datetime.fromtimestamp(exp, tz=timezone.utc)
+    logger.info(f"{now} ===> Token expires at: {exp_time}")
+
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

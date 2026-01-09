@@ -156,7 +156,7 @@ async def join_ads(
     query_string = urlencode({k: v for k, v in params.items() if v is not None})
     full_url = f"{api_url}?{query_string}"
 
-    //api_logger.info(f"[PIN JOIN GET] {full_url}")
+    #api_logger.info(f"[PIN JOIN GET] {full_url}")
 
     async with httpx.AsyncClient(timeout=5) as client:
         try:

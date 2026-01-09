@@ -89,11 +89,7 @@ async def verify_token(token: str, token_type: str = "access"):
         logger.info(f"[verify_token] raw token = {token}")
         logger.info(f"[verify_token] token_type = {token_type}")
 
-        payload = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
+        payload = await verify_token(token, token_type="access")
 
         logger.info(f"[verify_token] decoded payload = {payload}")
         return payload

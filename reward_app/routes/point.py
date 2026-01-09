@@ -29,64 +29,81 @@ router = APIRouter()
 
 @router.post("/list", name="포인트 리스트")
 async def list(
-    from_date: str =Form(default="", title="from_date",description="검색 시작일 Y-m-d. 빈값일 경우 현재 월의 1일")
-    , to_date: str =Form(default="", title="to_date",description="검색 종료일 Y-m-d. 빈값일 경우 현재 월의 말일일")
-    , use_type: EarnUseType = Form(title="point_type",description="E 적립, U 사용", )
-    , page: int = Form(default=1, ge=1)
-    , size: int = Form(default=20, ge=1)
-    , db: AsyncSession = Depends(get_async_session)
-    , current_user = Depends(get_current_user)
-    ):
-    # list = await db.execute(select(Notice).where(Notice.user_email==email))
+    from_date: str = Form(default="", title="from_date", description="검색 시작일 Y-m-d. 빈값일 경우 현재 월의 1일"),
+    to_date: str = Form(default="", title="to_date", description="검색 종료일 Y-m-d. 빈값일 경우 현재 월의 말일일"),
+    use_type: EarnUseType = Form(title="point_type", description="E 적립, U 사용"),
+    page: int = Form(default=1, ge=1),
+    size: int = Form(default=20, ge=1),
+    db: AsyncSession = Depends(get_async_session),
+    current_user=Depends(get_current_user),
+):
+    # 1) from_date/to_date 문자열을 date로 파싱 + 기본값 세팅
+    today = date.today()
 
+    if from_date:
+        # "YYYY-MM-DD" -> date
+        from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
+    else:
+        from_date_obj = today.replace(day=1)
 
-    if not from_date:
-        today = date.today()
-        from_date = today.replace(day=1)
-
-    if not to_date:
-        today = date.today()        
-
+    if to_date:
+        to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
+    else:
         last_day = calendar.monthrange(today.year, today.month)[1]
-        to_date = today.replace(day=last_day)
+        to_date_obj = today.replace(day=last_day)
 
-    user_seq = current_user.get('user_seq')
+    # 2) 날짜 범위를 datetime 범위로 변환 (to_date는 다음날 00:00 미만)
+    from_dt = datetime.combine(from_date_obj, time.min)  # 00:00:00
+    to_dt_exclusive = datetime.combine(to_date_obj + timedelta(days=1), time.min)  # 다음날 00:00:00
+
+    user_seq = current_user.get("user_seq")
     offset = (page - 1) * size
-    
-    conditions = []
-    conditions.append(PointHistory.user_seq==user_seq)
-    conditions.append(PointHistory.earn_use_type==use_type)
-    conditions.append(from_date<=PointHistory.crt_date)
-    conditions.append(PointHistory.crt_date<=to_date)
 
-    stmt = select(PointHistory.point_name, PointHistory.point, func.DATE_FORMAT(PointHistory.crt_date, '%Y-%m-%d').label("crt_date"), PointHistory.earn_use_type).where(*conditions).order_by(PointHistory.crt_date.desc()).offset(offset).limit(size)
-    result = await db.execute(stmt)
-    list = result.mappings().all()
+    conditions = [
+        PointHistory.user_seq == user_seq,
+        PointHistory.earn_use_type == use_type,
+        PointHistory.crt_date >= from_dt,
+        PointHistory.crt_date < to_dt_exclusive,
+    ]
 
-    count_stmt = (
-        select(func.count())
-        .select_from(PointHistory)
+    # 3) 조회
+    stmt = (
+        select(
+            PointHistory.point_name,
+            PointHistory.point,
+            func.DATE_FORMAT(PointHistory.crt_date, "%Y-%m-%d").label("crt_date"),
+            PointHistory.earn_use_type,
+        )
         .where(*conditions)
+        .order_by(PointHistory.crt_date.desc())
+        .offset(offset)
+        .limit(size)
     )
+    result = await db.execute(stmt)
+    rows = result.mappings().all()
 
+    # 4) count
+    count_stmt = select(func.count()).select_from(PointHistory).where(*conditions)
     count_result = await db.execute(count_stmt)
     total_count = count_result.scalar_one()
 
-    sum_stmt = (
-        select(func.sum(PointHistory.point))
-        .select_from(PointHistory)
-        .where(*conditions)
-    )
-
+    # 5) sum
+    sum_stmt = select(func.coalesce(func.sum(PointHistory.point), 0)).select_from(PointHistory).where(*conditions)
     sum_result = await db.execute(sum_stmt)
     total_point = sum_result.scalar_one()
 
-    if not total_point:
-        total_point=0
+    page_info = make_page_info(total_count, page, size)
 
-    page_info = make_page_info(total_count, page, size)    
-
-    return make_resp("S", {"from_date":from_date, "to_date":to_date, "total_point":total_point, "page_info":page_info, "list":list})
+    return make_resp(
+        "S",
+        {
+            "from_date": from_date_obj.strftime("%Y-%m-%d"),
+            "to_date": to_date_obj.strftime("%Y-%m-%d"),
+            "total_point": total_point,
+            "page_info": page_info,
+            "list": rows,
+        },
+    )
 
 
 @router.post("/info", name="현재 포인트, 30일 내 소멸 예정 포인트, 총 적립 포인트")

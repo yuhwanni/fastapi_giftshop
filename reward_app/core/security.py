@@ -103,8 +103,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             detail=make_resp("E401", "Token expired (토큰만료)")
         )
 
-    # 3) 로그는 exp 있을 때만 (디버깅용)
+    # 3) 로그는 exp 있을 때만 (디버깅용)    
     exp = payload.get("exp")
+    logger.d("YUHWANNI {token}, {exp}")
     if exp is not None:
         now_dt = datetime.now(timezone.utc)
         exp_dt = datetime.fromtimestamp(exp, tz=timezone.utc)

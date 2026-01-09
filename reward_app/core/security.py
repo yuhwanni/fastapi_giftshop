@@ -35,18 +35,14 @@ async def create_access_token(data: dict, expires_delta: int = ACCESS_TOKEN_EXPI
 
 async def create_refresh_token(data: dict, expires_delta: int = REFRESH_TOKEN_EXPIRE_DAYS):
     to_encode = data.copy()
-    expire = datetime.now() + timedelta(days=expires_delta)
-    # expire = datetime.now(UTC) + timedelta(minutes=expires_delta)
-    # exp 는 utc로 응답할때는 한국 시각으로
+    expire = datetime.now(UTC) + timedelta(days=expires_delta)  # ✅ UTC aware
     kst_time = expire.astimezone(KST)
-    
+
     to_encode.update({"exp": expire, "type": "refresh"})
-    # to_encode.update({"type": "refresh"})
     refresh_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-    return {"refresh_token":refresh_token, "refresh_token_expire_date": kst_time}
-    # return {"refresh_token":refresh_token}
-
+    return {"refresh_token": refresh_token, "refresh_token_expire_date": kst_time}
+    
 def is_token_expired(payload: dict) -> bool:
     exp = payload.get("exp")
     if not exp:
@@ -85,23 +81,29 @@ async def verify_token_old(token: str, token_type: str = "access"):
     #     return None
 
 async def verify_token(token: str, token_type: str = "access"):
+    if not token:
+        return None
+
     try:
         logger.info(f"[verify_token] raw token = {token}")
         logger.info(f"[verify_token] token_type = {token_type}")
 
-        payload = await verify_token(token, token_type="access")
-
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  # ✅ 여기서 exp 자동검증
         logger.info(f"[verify_token] decoded payload = {payload}")
+
+        # ✅ 토큰 타입 검사 (access/refresh 구분)
+        if payload.get("type") != token_type:
+            logger.error(f"[verify_token] token type mismatch: {payload.get('type')} != {token_type}")
+            return None
+
         return payload
 
     except ExpiredSignatureError as e:
         logger.error(f"[verify_token] EXPIRED token: {e}")
         return None
-
     except JWTError as e:
         logger.error(f"[verify_token] JWT ERROR: {e}")
         return None
-
     except Exception as e:
         logger.error(f"[verify_token] UNKNOWN ERROR: {e}")
         return None
@@ -117,9 +119,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=make_resp("E500", "토큰이 유효 하지 않음")
+            detail=make_resp("E500", "토큰이 유효 하지 않음@")
         )
-
     return payload
 
 

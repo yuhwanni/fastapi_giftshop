@@ -31,7 +31,7 @@ from reward_app.models.ads_complete_model import AdsComplete
 from reward_app.utils.common import make_page_info
 import httpx
 from fastapi import HTTPException
-
+from urllib.parse import urlencode
 
 router = APIRouter()
 
@@ -153,8 +153,10 @@ async def join_ads(
     join_url = ""
     msg = ""
 
-    api_logger.info(api_url)
-    api_logger.info(params)
+    query_string = urlencode({k: v for k, v in params.items() if v is not None})
+    full_url = f"{api_url}?{query_string}"
+
+    api_logger.info(f"[PIN JOIN GET] {full_url}")
 
     async with httpx.AsyncClient(timeout=5) as client:
         try:

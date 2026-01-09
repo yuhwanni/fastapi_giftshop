@@ -86,25 +86,30 @@ async def verify_token(token: str, token_type: str = "access"):
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):        
+async def get_current_user(token: str = Depends(oauth2_scheme)):
     payload = await verify_token(token, token_type="access")
 
-    exp = payload.get("exp")
-    now = datetime.now(timezone.utc).timestamp()
-    exp_time = datetime.fromtimestamp(exp, tz=timezone.utc)
-    logger.info(f"{now} ===> Token expires at: {exp_time}")
-
+    # 1) payload 검증을 먼저
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=make_resp("E500")
         )
 
+    # 2) 만료 검사 (exp 없으면 만료로 처리하는 방식 권장)
     if is_token_expired(payload):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=make_resp("E401", "Token expired (토큰만료)")
         )
+
+    # 3) 로그는 exp 있을 때만 (디버깅용)
+    exp = payload.get("exp")
+    if exp is not None:
+        now_dt = datetime.now(timezone.utc)
+        exp_dt = datetime.fromtimestamp(exp, tz=timezone.utc)
+        logger.info(f"{now_dt.isoformat()} ===> Token expires at: {exp_dt.isoformat()}")
+
     return payload
 
 async def get_current_user_optional(token: str = Depends(oauth2_scheme)):        

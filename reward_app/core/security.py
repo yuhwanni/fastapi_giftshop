@@ -42,7 +42,7 @@ async def create_refresh_token(data: dict, expires_delta: int = REFRESH_TOKEN_EX
     refresh_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
     return {"refresh_token": refresh_token, "refresh_token_expire_date": kst_time}
-    
+
 def is_token_expired(payload: dict) -> bool:
     exp = payload.get("exp")
     if not exp:
@@ -119,7 +119,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=make_resp("E500", "토큰이 유효 하지 않음@")
+            detail=make_resp("E500")
         )
     return payload
 

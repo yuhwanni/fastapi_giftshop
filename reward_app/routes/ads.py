@@ -153,6 +153,9 @@ async def join_ads(
     join_url = ""
     msg = ""
 
+    logger.d(api_url)
+    logger.d(params)
+
     async with httpx.AsyncClient(timeout=5) as client:
         try:
             resp = await client.post(api_url, data=params)

@@ -153,8 +153,8 @@ async def join_ads(
     join_url = ""
     msg = ""
 
-    logger.d(api_url)
-    logger.d(params)
+    api_logger.d(api_url)
+    api_logger.d(api_url)
 
     async with httpx.AsyncClient(timeout=5) as client:
         try:

@@ -133,14 +133,14 @@ class HoroscopeGenerator:
         if tone is None:
             sql = text("""
                 SELECT text, weight, tone
-                FROM horoscope_parts
+                FROM HOROSCOPE_PARTS
                 WHERE part_type = :part_type
             """)
             params = {"part_type": part_type}
         else:
             sql = text("""
                 SELECT text, weight, tone
-                FROM horoscope_parts
+                FROM HOROSCOPE_PARTS
                 WHERE part_type = :part_type
                   AND (tone = :tone OR tone IS NULL)
             """)
@@ -168,6 +168,20 @@ class HoroscopeGenerator:
 
 @router.post("/list", name="운세", description="")
 async def unse(db: AsyncSession = Depends(get_async_session)):
+
+    # 🔹 띠별 출생년도 전체 조회 (한 번만)
+    years_q = text("""
+        SELECT zodiac, years_txt
+        FROM PC_ZODIAC_YEAR
+    """)
+    years_res = await db.execute(years_q)
+
+    # zodiac -> years_txt 매핑
+    years_map = {
+        row["zodiac"]: row["years_txt"]
+        for row in years_res.mappings().all()
+    }
+
     # 기존 SQL의 DAYOFWEEK(CURDATE())-1 과 동일한 값
     weekday = php_weekday_today()
 
@@ -185,6 +199,7 @@ async def unse(db: AsyncSession = Depends(get_async_session)):
             "tone": results[z]["tone"],
             "weekday": results[z]["weekday"],
             "date": results[z]["date"],
+            "years": years_map.get(z, ""),   # ✅ 여기 추가
         }
         for z in ZODIACS
     ]

@@ -168,7 +168,9 @@ async def join_ads(
             join_url = data.get("url", "")
             msg = data.get("code", "")
 
-            api_logger.info(f"[PIN JOIN GET] {data}")
+            #api_logger.info(f"[PIN JOIN GET] {data}")
+
+            return make_resp("S", data)
 
         except httpx.TimeoutException:
             return make_resp("E108", {"status_code":504, "detail":"Upstream service timeout"})

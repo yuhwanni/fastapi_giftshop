@@ -156,7 +156,7 @@ async def join_ads(
     query_string = urlencode({k: v for k, v in params.items() if v is not None})
     full_url = f"{api_url}?{query_string}"
 
-    api_logger.info(f"[PIN JOIN GET] {full_url}")
+    //api_logger.info(f"[PIN JOIN GET] {full_url}")
 
     async with httpx.AsyncClient(timeout=5) as client:
         try:
@@ -257,6 +257,10 @@ async def feed_list(
     
     stmt = select(Ads).where(and_(Ads.ads_os_type.in_(platforms), Ads.show_yn == "Y",Ads.ads_type == "8", Ads.live_yn == 'Y')).order_by(Ads.ads_order.asc(), Ads.upd_date.desc()).limit(limit)
     result = await db.execute(stmt)
-    list = result.mappings().all()
+
+    #list = result.mappings().all()
+    ads_list = result.scalars().all()  
+    list = [ad.to_dict() for ad in ads_list]
+
     return make_resp("S", {"list":list})
 
